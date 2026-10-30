@@ -3,7 +3,7 @@
 import { Eye, EyeOff } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -17,8 +17,10 @@ import {
   FieldSeparator,
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
-import { useLogin } from "@/hooks";
+import { useGetMe, useLogin } from "@/hooks";
 import LoginImage from "../../../public/assest/login.jpg";
+import { useRouter } from "next/navigation";
+import AuthLoading from "../auth/auth-loading";
 
 type LoginFormValues = {
   email: string;
@@ -32,7 +34,9 @@ const DEMO_CREDENTIALS: LoginFormValues = {
 
 export function LoginForm() {
   const [showPassword, setShowPassword] = useState(false);
+  const { data: user, isLoading, isError } = useGetMe();
   const { mutate: login, isPending } = useLogin();
+  const router = useRouter();
 
   const {
     register,
@@ -42,6 +46,20 @@ export function LoginForm() {
   } = useForm<LoginFormValues>({
     defaultValues: { email: "", password: "" },
   });
+
+  useEffect(() => {
+    if (!isLoading && user) {
+      router.replace("/");
+    }
+  }, [user, isLoading, router]);
+
+  if (isLoading) {
+    return <AuthLoading />;
+  }
+
+  if (user) {
+    return null;
+  }
 
   const onSubmit = async (data: LoginFormValues) => {
     const payload = {
@@ -54,6 +72,7 @@ export function LoginForm() {
         toast.success("Signed in", {
           description: `Welcome back, ${payload.email}.`,
         });
+        router.push("/");
       },
       onError: (error) => {
         const message =

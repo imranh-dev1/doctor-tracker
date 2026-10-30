@@ -1,3 +1,4 @@
+import AuthGuard from "@/components/auth/auth-guard";
 import { AppSidebar } from "@/components/layout/app-sidebar";
 import { Separator } from "@/components/ui/separator";
 import {
@@ -20,7 +21,9 @@ export default function DashboardLayout({
           <Separator orientation="vertical" className="mr-2 h-4" />
           <span className="text-sm text-muted-foreground">Doctor Tracker</span>
         </header>
-        <main className="flex-1 p-4 md:p-6">{children}</main>
+        <AuthGuard>
+          <main className="flex-1 p-4 md:p-6">{children}</main>
+        </AuthGuard>
       </SidebarInset>
     </SidebarProvider>
   );
