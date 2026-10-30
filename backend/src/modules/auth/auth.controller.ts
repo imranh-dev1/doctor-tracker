@@ -3,6 +3,7 @@ import { sendResponse } from "../../utils/sendResponse";
 import httpStatus from "http-status";
 import { AuthServices } from "./auth.service";
 import type { RequestUser } from "../../middlewares/checkAuth";
+import { clearAuthCookies } from "../../utils/authCookie";
 
 const register = async (req: Request, res: Response) => {
 	const result = await AuthServices.register(req.body);
@@ -39,8 +40,20 @@ const getMe = async (req: Request, res: Response) => {
 	});
 };
 
+const logout = async (req: Request, res: Response) => {
+	clearAuthCookies(res);
+
+	sendResponse(res, {
+		statusCode: httpStatus.OK,
+		success: true,
+		message: "Logout successful.",
+		data: null,
+	});
+};
+
 export const AuthControllers = {
 	register,
 	login,
 	getMe,
+	logout,
 };
