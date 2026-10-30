@@ -7,11 +7,17 @@
     "dev": "tsx watch src/server.ts",
     "build": "tsc",
     "start": "node dist/server.js",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "format:check": "bunx @biomejs/biome format ./src",
+    "format:fix": "bunx @biomejs/biome format --write ./src",
+    "linter:check": "bunx @biomejs/biome lint",
+    "linter:fix": "bunx @biomejs/biome lint --write ./src"
   },
   "devDependencies": {
+    "@biomejs/biome": "2.6.4",
     "@types/bun": "latest",
     "@types/express": "^5.0.6",
+    "@types/jsonwebtoken": "^9.0.10",
     "@types/node": "^26.6.6",
     "tsx": "^4.23.15"
   },

@@ -1,39 +1,50 @@
 import type { ObjectId } from "mongodb";
 
 export const UserRole = {
-    ADMIN: "ADMIN",
-    DOCTOR: "DOCTOR",
-    PATIENT: "PATIENT",
+	ADMIN: "ADMIN",
+	DOCTOR: "DOCTOR",
+	PATIENT: "PATIENT",
 } as const;
 
 export type UserRole = (typeof UserRole)[keyof typeof UserRole];
 
 export const UserStatus = {
-    ACTIVE: "ACTIVE",
-    BLOCKED: "BLOCKED"
-} as const
+	ACTIVE: "ACTIVE",
+	BLOCKED: "BLOCKED",
+} as const;
 
 export type UserStatus = (typeof UserStatus)[keyof typeof UserStatus];
 
 export interface User {
-    _id: ObjectId;
-    name: string;
-    email: string;
-    passwordHash: string;
-    role: UserRole;
-    status: UserStatus;
-    emailVerified: boolean;
-    createdAt: Date;
-    updatedAt: Date;
+	_id: ObjectId;
+	name: string;
+	email: string;
+	passwordHash: string;
+	role: UserRole;
+	status: UserStatus;
+	emailVerified: boolean;
+	createdAt: Date;
+	updatedAt: Date;
 }
 
 export interface RegisterUser {
-    name: string;
-    email: string;
-    passwordHash: string;
-    role: UserRole;
-    status: UserStatus;
-    emailVerified: boolean;
-    createdAt: Date;
-    updatedAt: Date;
+	name: string;
+	email: string;
+	passwordHash: string;
+	role: UserRole;
+	status: UserStatus;
+	emailVerified: boolean;
+	createdAt: Date;
+	updatedAt: Date;
+}
+
+export interface RegisterPayload {
+	name: string;
+	email: string;
+	password: string;
+}
+
+export interface LoginPayload {
+	email: string;
+	password: string;
 }
