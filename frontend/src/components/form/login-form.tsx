@@ -17,6 +17,8 @@ import { Input } from "@/components/ui/input";
 import Image from "next/image";
 import Link from "next/link";
 import LoginImage from "../../../public/assest/login.jpg";
+import { useLogin } from "@/hooks";
+import { toast } from "sonner";
 
 type LoginFormValues = {
   email: string;
@@ -30,19 +32,40 @@ const DEMO_CREDENTIALS: LoginFormValues = {
 
 export function LoginForm() {
   const [showPassword, setShowPassword] = useState(false);
+  const { mutate: login, isPending } = useLogin();
 
   const {
     register,
     handleSubmit,
     setValue,
-    formState: { errors, isSubmitting },
+    formState: { errors },
   } = useForm<LoginFormValues>({
     defaultValues: { email: "", password: "" },
   });
 
   const onSubmit = async (data: LoginFormValues) => {
-    // TODO: replace with your real login logic (API call / next-auth signIn etc.)
-    console.log("Login data:", data);
+    const payload = {
+      email: data.email,
+      password: data.password,
+    };
+
+    login(payload, {
+      onSuccess: () => {
+        toast.success("Signed in", {
+          description: `Welcome back, ${payload.email}.`,
+        });
+      },
+      onError: (error) => {
+        const message =
+          error instanceof Error
+            ? error.message
+            : "Unable to sign in. Check your credentials and try again.";
+
+        toast.error("Sign in failed", {
+          description: message,
+        });
+      },
+    });
   };
 
   const handleDemoLogin = () => {
@@ -60,7 +83,7 @@ export function LoginForm() {
               <div className="flex flex-col items-center gap-2 text-center">
                 <h1 className="text-2xl font-bold">Welcome back</h1>
                 <p className="text-balance text-muted-foreground">
-                  Login to your Acme Inc account
+                  Login to your Doctor Tracker account
                 </p>
               </div>
               <Field>
@@ -126,8 +149,8 @@ export function LoginForm() {
                 )}
               </Field>
               <Field>
-                <Button type="submit" disabled={isSubmitting}>
-                  {isSubmitting ? "Logging in..." : "Login"}
+                <Button type="submit" disabled={isPending}>
+                  {isPending ? "Logging in..." : "Login"}
                 </Button>
               </Field>
               <FieldSeparator className="*:data-[slot=field-separator-content]:bg-card">
@@ -138,7 +161,7 @@ export function LoginForm() {
                   type="button"
                   variant="outline"
                   onClick={handleDemoLogin}
-                  disabled={isSubmitting}
+                  disabled={isPending}
                 >
                   Login with demo credentials
                 </Button>

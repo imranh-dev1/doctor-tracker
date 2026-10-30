@@ -19,6 +19,9 @@ const register = async (req: Request, res: Response) => {
 const login = async (req: Request, res: Response) => {
 	const result = await AuthServices.login(req.body);
 
+	console.log("HIt this function");
+
+
 	sendResponse(res, {
 		statusCode: httpStatus.OK,
 		success: true,

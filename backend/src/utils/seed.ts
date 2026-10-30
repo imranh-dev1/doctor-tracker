@@ -100,7 +100,7 @@ export const seedDoctor = async () => {
 
 		await users.insertOne(doctor);
 
-		console.log("Doctor account created successfully.", seedDoctor);
+		console.log("Doctor account created successfully.", doctor);
 	} catch (error) {
 		console.error("Error seeding doctor:", error);
 		throw error;
@@ -152,7 +152,7 @@ export const seedPatient = async () => {
 
 		await users.insertOne(patient);
 
-		console.log("Patient account created successfully.", seedPatient);
+		console.log("Patient account created successfully.", patient);
 	} catch (error) {
 		console.error("Error seeding patient:", error);
 		throw error;
