@@ -10,6 +10,18 @@ export default {
     bak_url: process.env.APP_URL,
     frontend_url: process.env.FRONTEND_URL,
 
+    admin_name: process.env.ADMIN_NAME,
+    admin_email: process.env.ADMIN_EMAIL,
+    admin_pass: process.env.ADMIN_PASSWORD,
+
+    doctor_name: process.env.DOCTOR_NAME,
+    doctor_email: process.env.DOCTOR_EMAIL,
+    doctor_pass: process.env.DOCTOR_PASSWORD,
+
+    patient_name: process.env.PATIENT_NAME,
+    patient_email: process.env.PATIENT_EMAIL,
+    patient_pass: process.env.PATIENT_PASSWORD,
+
     bcrypt_salt_rounds: process.env.BCRYPT_SALT_ROUNDS,
 
     jwt_access_secret: process.env.JWT_ACCESS_SECRET!,

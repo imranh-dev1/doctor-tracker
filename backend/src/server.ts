@@ -4,6 +4,7 @@ import "dotenv/config";
 import app from "./app.js";
 import config from "./config/index.js";
 import { connectToMongoDB, disconnectFromMongoDB } from "./lib/db.js";
+import { seedAdmin, seedDoctor, seedPatient } from "./utils/seed.js";
 
 const port = Number(config.port ?? 5000);
 
@@ -11,6 +12,10 @@ const main = async () => {
     try {
         await connectToMongoDB();
         console.log("Connected to the database successfully.");
+
+        await seedAdmin();
+        await seedDoctor();
+        await seedPatient();
 
         app.listen(port, () => {
             console.log(`Server is running on port: http://localhost:${port}`);
