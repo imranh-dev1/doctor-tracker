@@ -118,6 +118,7 @@ export function LoginForm() {
                 <div className="relative">
                   <Input
                     id="password"
+                    placeholder="*******"
                     type={showPassword ? "text" : "password"}
                     className="pr-10"
                     aria-invalid={!!errors.password}
@@ -174,6 +175,8 @@ export function LoginForm() {
           <div className="relative hidden bg-muted md:block">
             <Image
               fill
+              sizes="100"
+              loading="eager"
               src={LoginImage}
               alt="Image"
               className="absolute inset-0 h-full w-full object-cover dark:brightness-[0.2] dark:grayscale"
