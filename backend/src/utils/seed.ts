@@ -39,7 +39,7 @@ export const seedAdmin = async () => {
 		const admin: RegisterUser = {
 			name,
 			email,
-			passwordHash,
+			password: passwordHash,
 			role: UserRole.ADMIN,
 			status: UserStatus.ACTIVE,
 			emailVerified: true,
@@ -90,7 +90,7 @@ export const seedDoctor = async () => {
 		const doctor: RegisterUser = {
 			name,
 			email,
-			passwordHash,
+			password: passwordHash,
 			role: UserRole.DOCTOR,
 			status: UserStatus.ACTIVE,
 			emailVerified: true,
@@ -142,7 +142,7 @@ export const seedPatient = async () => {
 		const patient: RegisterUser = {
 			name,
 			email,
-			passwordHash,
+			password: passwordHash,
 			role: UserRole.PATIENT,
 			status: UserStatus.ACTIVE,
 			emailVerified: true,

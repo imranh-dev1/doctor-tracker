@@ -15,6 +15,13 @@ import { jwtUtils } from "../../utils/jwt";
 import type { SignOptions } from "jsonwebtoken";
 import { ObjectId } from "mongodb";
 
+const toSafeUser = (user: User) => {
+	const { password, ...safeUser } = user;
+	delete (safeUser as { passwordHash?: string }).passwordHash;
+
+	return safeUser;
+};
+
 const register = async (payload: RegisterPayload) => {
 	const db = getDatabase();
 	const users = db.collection("users");
@@ -41,7 +48,7 @@ const register = async (payload: RegisterPayload) => {
 	const newUser: RegisterUser = {
 		name,
 		email,
-		passwordHash,
+		password: passwordHash,
 		role: UserRole.PATIENT,
 		status: UserStatus.ACTIVE,
 		emailVerified: true,
@@ -63,22 +70,38 @@ const login = async (payload: LoginPayload) => {
 	});
 
 	if (!user) {
-		throw new AppError(httpStatus.NOT_FOUND, "User not found");
+		throw new AppError(
+			httpStatus.UNAUTHORIZED,
+			"Invalid email or password.",
+		);
 	}
 
 	if (user.status === UserStatus.BLOCKED) {
-		throw new AppError(httpStatus.NOT_FOUND, "User Is Bloked");
+		throw new AppError(
+			httpStatus.FORBIDDEN,
+			"Your account has been blocked. Please contact support.",
+		);
+	}
+
+	const storedPassword =
+		user.password ?? (user as { passwordHash?: string }).passwordHash;
+
+	if (!storedPassword) {
+		throw new AppError(
+			httpStatus.UNAUTHORIZED,
+			"Invalid email or password.",
+		);
 	}
 
 	const isPasswordMatched = await bcrypt.compare(
 		payload.password,
-		user.passwordHash,
+		storedPassword,
 	);
 
 	if (!isPasswordMatched) {
 		throw new AppError(
-			httpStatus.CONFLICT,
-			"Password incorrect, please try again",
+			httpStatus.UNAUTHORIZED,
+			"Invalid email or password.",
 		);
 	}
 
@@ -101,10 +124,8 @@ const login = async (payload: LoginPayload) => {
 		config.jwt_refresh_expires_in as SignOptions,
 	);
 
-	const { password: passwordHash, ...safeUser } = user;
-
 	return {
-		user: safeUser,
+		user: toSafeUser(user as User),
 		accessToken,
 		refreshToken,
 	};
@@ -126,11 +147,7 @@ const getMe = async (userId: string) => {
 		throw new AppError(httpStatus.NOT_FOUND, "User not found.");
 	}
 
-	const { password: passwordHash, ...safeUser } = user;
-
-	return {
-		safeUser,
-	};
+	return toSafeUser(user as User);
 };
 
 export const AuthServices = {

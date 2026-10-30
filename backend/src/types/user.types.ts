@@ -19,7 +19,7 @@ export interface User {
 	_id: ObjectId;
 	name: string;
 	email: string;
-	passwordHash: string;
+	password: string;
 	role: UserRole;
 	status: UserStatus;
 	emailVerified: boolean;
@@ -30,7 +30,7 @@ export interface User {
 export interface RegisterUser {
 	name: string;
 	email: string;
-	passwordHash: string;
+	password: string;
 	role: UserRole;
 	status: UserStatus;
 	emailVerified: boolean;

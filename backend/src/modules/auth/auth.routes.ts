@@ -28,4 +28,4 @@ router.get(
 
 router.post("/logout", AuthControllers.logout);
 
-export const AuthRoutes = Router;
+export const AuthRoutes = router;

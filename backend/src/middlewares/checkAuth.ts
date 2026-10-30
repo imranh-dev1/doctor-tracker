@@ -7,6 +7,7 @@ import { jwtUtils } from "../utils/jwt";
 import type { User, UserRole } from "../types/user.types";
 import httpStatus from "http-status";
 import { getDatabase } from "../lib/db";
+import { ObjectId } from "mongodb";
 
 export interface RequestUser {
 	email: string;
@@ -57,12 +58,19 @@ export const auth = (...requiredRoles: UserRole[]) => {
 				);
 			}
 
+			if (!ObjectId.isValid(userId)) {
+				throw new AppError(
+					httpStatus.UNAUTHORIZED,
+					"Invalid session. Please log in again.",
+				);
+			}
+
 			const db = getDatabase();
 
 			const users = db.collection<User>("users");
 
 			const user = await users.findOne({
-				_id: userId,
+				_id: new ObjectId(userId),
 				email,
 				name,
 				role,
