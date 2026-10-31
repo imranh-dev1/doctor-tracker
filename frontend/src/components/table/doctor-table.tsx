@@ -228,7 +228,7 @@ export function DoctorTable() {
           <SearchInput
             value={searchInput}
             onChange={setSearchInput}
-            placeholder="Search name, email, phone..."
+            placeholder="Search name, email, phone, Specialization, Hospital..."
             className="sm:max-w-sm"
           />
 
@@ -240,7 +240,7 @@ export function DoctorTable() {
               })
             }
           >
-            <SelectTrigger className="h-10 w-full sm:w-[190px]">
+            <SelectTrigger className="h-10 w-full sm:w-47.5">
               <SelectValue placeholder="All specializations" />
             </SelectTrigger>
 
