@@ -5,3 +5,5 @@ export default function DoctorPage() {
     </div>
   );
 }
+
+export const instant = false

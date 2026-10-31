@@ -5,3 +5,5 @@ export default function DashboardPage() {
     </div>
   );
 }
+
+export const instant = false

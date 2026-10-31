@@ -5,3 +5,5 @@ export default function PatientsPage() {
     </div>
   );
 }
+
+export const instant = false
