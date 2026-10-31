@@ -34,8 +34,7 @@ export default function NotFound() {
 
         {/* Error Card */}
         <Card className="overflow-hidden border-border/70 shadow-xl shadow-black/5">
-          <CardHeader className="items-center pb-2 pt-9 text-center"> 
-
+          <CardHeader className="items-center pb-2 pt-9 text-center">
             <CardTitle className="text-3xl font-extrabold tracking-tight sm:text-4xl">
               Page not found
             </CardTitle>

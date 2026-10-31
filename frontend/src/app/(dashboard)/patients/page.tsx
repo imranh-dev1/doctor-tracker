@@ -6,4 +6,4 @@ export default function PatientsPage() {
   );
 }
 
-export const instant = false
+export const instant = false;

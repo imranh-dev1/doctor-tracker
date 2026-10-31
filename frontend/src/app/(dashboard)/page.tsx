@@ -6,4 +6,4 @@ export default function DashboardPage() {
   );
 }
 
-export const instant = false
+export const instant = false;

@@ -5,6 +5,7 @@ import config from "./config";
 import { AuthRoutes } from "./modules/auth/auth.routes";
 import { notFound } from "./middlewares/not-found";
 import { globalErrorHandler } from "./middlewares/globalErrorHandler";
+import { DoctorRoutes } from "./modules/doctor/doctor.routes";
 
 const app = express();
 
@@ -28,6 +29,7 @@ app.get("/", (req, res) => {
 });
 
 app.use("/api/auth", AuthRoutes);
+app.use("/api/doctor", DoctorRoutes);
 
 app.use(notFound);
 app.use(globalErrorHandler);
