@@ -35,6 +35,7 @@ import { specializations, type Doctor, type GetAllDoctorsQuery } from "@/types";
 
 import { DoctorTableSkeleton } from "../skeleton/doctor-table-skeleton";
 import DataPagination from "../shared/pagination";
+import { DeleteDoctorDialog } from "../dilog/delete-doctor-dialog";
 
 const limit = 10;
 
@@ -113,51 +114,6 @@ function StateMessage({
 
       {action}
     </div>
-  );
-}
-
-function DoctorActions({ doctor }: { doctor: Doctor }) {
-  const router = useRouter();
-
-  return (
-    <DropdownMenu>
-      <DropdownMenuTrigger>
-        <Button
-          variant="ghost"
-          size="icon"
-          className="size-8"
-          aria-label={`Actions for ${doctor.name}`}
-        >
-          <MoreHorizontal className="size-4" />
-        </Button>
-      </DropdownMenuTrigger>
-
-      <DropdownMenuContent align="end">
-        <DropdownMenuItem
-          onSelect={() => router.push(`/admin/doctors/${doctor._id}`)}
-        >
-          <Eye className="mr-2 size-4" />
-          View details
-        </DropdownMenuItem>
-
-        <DropdownMenuItem
-          onSelect={() => router.push(`/admin/doctors/${doctor._id}/edit`)}
-        >
-          <Pencil className="mr-2 size-4" />
-          Edit doctor
-        </DropdownMenuItem>
-
-        <DropdownMenuSeparator />
-
-        <DropdownMenuItem
-          variant="destructive"
-          onSelect={() => console.log("Delete doctor:", doctor._id)}
-        >
-          <Trash2 className="mr-2 size-4" />
-          Delete doctor
-        </DropdownMenuItem>
-      </DropdownMenuContent>
-    </DropdownMenu>
   );
 }
 
@@ -378,8 +334,12 @@ export function DoctorTable() {
                         {formatDate(doctor.createdAt)}
                       </TableCell>
 
-                      <TableCell className="pr-4 text-right sm:pr-6">
-                        <DoctorActions doctor={doctor} />
+                      <TableCell className="">
+                        <DeleteDoctorDialog
+                          doctorId={doctor._id}
+                          doctorName={doctor.name}
+                          key={doctor._id}
+                        />
                       </TableCell>
                     </TableRow>
                   ))}

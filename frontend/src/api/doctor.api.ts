@@ -11,3 +11,9 @@ export function getAllDoctor(params?: GetAllDoctorsQuery) {
     query: params,
   });
 }
+
+export function deleteDoctor(id: string) {
+  return apiClint(`/doctor/${id}`, {
+    method: "DELETE",
+  });
+}

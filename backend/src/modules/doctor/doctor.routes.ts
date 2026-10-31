@@ -16,4 +16,10 @@ router.post(
 
 router.get("/", auth(UserRole.ADMIN), DoctorControllers.getAllDoctors);
 
+router.delete(
+	"/:id",
+	auth(UserRole.ADMIN),
+	DoctorControllers.deleteDoctor,
+);
+
 export const DoctorRoutes = router;

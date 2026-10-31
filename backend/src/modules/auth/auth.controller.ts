@@ -4,8 +4,9 @@ import httpStatus from "http-status";
 import { AuthServices } from "./auth.service";
 import type { RequestUser } from "../../middlewares/checkAuth";
 import { clearAuthCookies, setAuthCookies } from "../../utils/authCookie";
+import { catchAsync } from "../../utils/catchAsync";
 
-const register = async (req: Request, res: Response) => {
+const register = catchAsync(async (req: Request, res: Response) => {
 	const result = await AuthServices.register(req.body);
 
 	sendResponse(res, {
@@ -14,9 +15,9 @@ const register = async (req: Request, res: Response) => {
 		message: "User registered successfully.",
 		data: result,
 	});
-};
+});
 
-const login = async (req: Request, res: Response) => {
+const login = catchAsync(async (req: Request, res: Response) => {
 	const result = await AuthServices.login(req.body);
 
 	setAuthCookies(res, result.accessToken, result.refreshToken);
@@ -27,9 +28,9 @@ const login = async (req: Request, res: Response) => {
 		message: "User login successfully.",
 		data: result,
 	});
-};
+});
 
-const getMe = async (req: Request, res: Response) => {
+const getMe = catchAsync(async (req: Request, res: Response) => {
 	const user = req.user as RequestUser;
 
 	const result = await AuthServices.getMe(user.userId);
@@ -40,9 +41,9 @@ const getMe = async (req: Request, res: Response) => {
 		message: "Current user retrieved successfully.",
 		data: result,
 	});
-};
+});
 
-const logout = async (req: Request, res: Response) => {
+const logout = catchAsync(async (req: Request, res: Response) => {
 	clearAuthCookies(res);
 
 	sendResponse(res, {
@@ -51,7 +52,7 @@ const logout = async (req: Request, res: Response) => {
 		message: "Logout successful.",
 		data: null,
 	});
-};
+});
 
 export const AuthControllers = {
 	register,

@@ -1,11 +1,11 @@
 import httpStatus from "http-status";
 import {
 	CreateDoctorPayload,
-    GetAllDoctorsQuery, 
+	GetAllDoctorsQuery,
 } from "../../types/doctor.types";
 import { getDatabase } from "../../lib/db";
 import { AppError } from "../../utils/AppError";
-import { Document as MongoDocument, Filter } from "mongodb";
+import { Document as MongoDocument, Filter, ObjectId } from "mongodb";
 
 const createDoctor = async (payload: CreateDoctorPayload) => {
 	const db = getDatabase();
@@ -130,7 +130,31 @@ const getAllDoctors = async (query: GetAllDoctorsQuery) => {
 	};
 };
 
+const deleteDoctor = async (id: string) => {
+	const db = getDatabase();
+	const doctors = db.collection("doctors");
+
+	if (!ObjectId.isValid(id)) {
+		throw new AppError(httpStatus.BAD_REQUEST, "Invalid doctor ID");
+	}
+
+	const doctor = await doctors.findOne({
+		_id: new ObjectId(id),
+	});
+
+	if (!doctor) {
+		throw new AppError(httpStatus.NOT_FOUND, "Doctor not found");
+	}
+
+	await doctors.deleteOne({
+		_id: new ObjectId(id),
+	});
+
+	return doctor;
+};
+
 export const DoctorServices = {
 	createDoctor,
 	getAllDoctors,
+	deleteDoctor
 };
