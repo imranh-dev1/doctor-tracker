@@ -59,14 +59,12 @@ const EMPTY: FormValues = {
 
 interface DoctorFormDialogProps {
   open: boolean;
-  onOpenChange: (open: boolean) => void;
-  hospitals?: string[];
+  onOpenChange: (open: boolean) => void; 
 }
 
 export function DoctorFormDialog({
   open,
-  onOpenChange,
-  hospitals = [],
+  onOpenChange, 
 }: DoctorFormDialogProps) {
   const { mutate: createDoctor, isPending } = useCreateDoctor();
 
@@ -167,6 +165,7 @@ export function DoctorFormDialog({
               <Label htmlFor="doctor-specialization">Specialization</Label>
 
               <NativeSelect
+                className="w-full"
                 id="doctor-specialization"
                 aria-invalid={Boolean(errors.specialization)}
                 {...form.register("specialization")}
@@ -199,13 +198,7 @@ export function DoctorFormDialog({
                 aria-invalid={Boolean(errors.hospital)}
                 {...form.register("hospital")}
               />
-
-              <datalist id="hospital-options">
-                {hospitals.map((hospital) => (
-                  <option key={hospital} value={hospital} />
-                ))}
-              </datalist>
-
+  
               {errors.hospital && (
                 <p className="text-xs font-medium text-destructive">
                   {errors.hospital.message}
