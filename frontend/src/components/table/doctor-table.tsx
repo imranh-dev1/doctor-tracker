@@ -3,8 +3,6 @@
 import { useCallback, useEffect, useState, type ReactNode } from "react";
 import { Eye, MoreHorizontal, Pencil, Stethoscope, Trash2 } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
@@ -60,7 +58,6 @@ function useDoctorFilters() {
     limit,
     search: searchParams.get("search") ?? "",
     specialization: searchParams.get("specialization") ?? "",
-    hospital: searchParams.get("hospital") ?? "",
     sortBy: searchParams.get("sortBy") ?? "",
     sortOrder:
       rawSortOrder === "asc" || rawSortOrder === "desc"
@@ -71,8 +68,6 @@ function useDoctorFilters() {
   const setFilters = useCallback(
     (updates: Partial<Record<keyof GetAllDoctorsQuery, string | null>>) => {
       const params = new URLSearchParams(searchParams.toString());
-
-      // Reset pagination when another filter changes.
       if (!("page" in updates)) {
         params.delete("page");
       }
@@ -169,7 +164,7 @@ function DoctorActions({ doctor }: { doctor: Doctor }) {
 export function DoctorTable() {
   const { filters, setFilters } = useDoctorFilters();
 
-  const { page, search, specialization, hospital, sortBy, sortOrder } = filters;
+  const { page, search, specialization, sortBy, sortOrder } = filters;
 
   const [searchInput, setSearchInput] = useState(search ?? "");
 
@@ -197,7 +192,6 @@ export function DoctorTable() {
     limit,
     search: search || undefined,
     specialization: specialization || undefined,
-    hospital: hospital || undefined,
     sortBy: sortBy || undefined,
     sortOrder,
   };
@@ -208,18 +202,14 @@ export function DoctorTable() {
   const total = data?.data.meta.total ?? 0;
   const totalPages = data?.data.meta.totalPages ?? 1;
 
-  const hasFilters = Boolean(
-    search || specialization || hospital || sortBy || sortOrder,
-  );
+  const hasFilters = Boolean(search || specialization || sortBy || sortOrder);
 
-  // Clear all filters.
   const clearFilters = () => {
     setSearchInput("");
 
     setFilters({
       search: null,
       specialization: null,
-      hospital: null,
       sortBy: null,
       sortOrder: null,
     });
@@ -235,7 +225,6 @@ export function DoctorTable() {
     <Card className="overflow-hidden border-border/70 shadow-sm">
       <CardHeader className="gap-4 border-b bg-muted/20 px-4 py-5 sm:px-6">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-          {/* Search */}
           <SearchInput
             value={searchInput}
             onChange={setSearchInput}
@@ -243,7 +232,6 @@ export function DoctorTable() {
             className="sm:max-w-sm"
           />
 
-          {/* Specialization filter */}
           <Select
             value={specialization || "all"}
             onValueChange={(value) =>
@@ -267,7 +255,6 @@ export function DoctorTable() {
             </SelectContent>
           </Select>
 
-          {/* Sort field */}
           <Select
             value={sortBy || "none"}
             onValueChange={(value) =>
