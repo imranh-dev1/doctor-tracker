@@ -8,10 +8,12 @@ import { DoctorControllers } from "./doctor.controller";
 const router = Router();
 
 router.post(
-    "/",
-    auth(UserRole.ADMIN),
-    validateRequest(DoctorValidation.createDoctorSchema),
-    DoctorControllers.createDoctor,
+	"/",
+	auth(UserRole.ADMIN),
+	validateRequest(DoctorValidation.createDoctorSchema),
+	DoctorControllers.createDoctor,
 );
+
+router.get("/", auth(UserRole.ADMIN), DoctorControllers.getAllDoctors);
 
 export const DoctorRoutes = router;

@@ -1,9 +1,10 @@
-"use client"
+"use client";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/shared/page-header";
-import { DoctorFormDialog } from "@/components/doctors/doctor-create-form-dialog";
+import { DoctorFormDialog } from "@/components/form/doctor-create-form-dialog";
 import { Plus } from "lucide-react";
+import { DoctorTable } from "@/components/table/doctor-table";
 
 export default function DoctorsPage() {
   const [open, setOpen] = useState(false);
@@ -22,6 +23,7 @@ export default function DoctorsPage() {
         }
       />
 
+      <DoctorTable />
       <DoctorFormDialog open={open} onOpenChange={setOpen} />
     </div>
   );

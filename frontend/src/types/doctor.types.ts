@@ -1,5 +1,5 @@
 export type Doctor = {
-  id: string;
+  _id: string;
   name: string;
   specialization: string;
   hospital: string;
@@ -32,3 +32,13 @@ export const specializations = [
   "Pulmonology",
   "Urology",
 ] as const;
+
+export interface GetAllDoctorsQuery {
+  page?: number;
+  limit?: number;
+  search?: string;
+  specialization?: string;
+  hospital?: string;
+  sortBy?: string;
+  sortOrder?: "asc" | "desc";
+}

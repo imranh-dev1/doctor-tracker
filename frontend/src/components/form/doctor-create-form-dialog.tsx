@@ -20,6 +20,7 @@ import { NativeSelect } from "@/components/ui/native-select";
 import { specializations } from "@/types";
 import { useCreateDoctor } from "@/hooks/doctor.hook";
 import { toast } from "sonner";
+import { useQueryClient } from "@tanstack/react-query";
 
 const schema = z.object({
   name: z
@@ -36,13 +37,13 @@ const schema = z.object({
     .min(2, "Enter the hospital or clinic name")
     .max(160, "Hospital name must be 160 characters or fewer"),
 
-phone: z
-  .string()
-  .trim()
-  .regex(
-    /^(?:\+8801[3-9]\d{8}|8801[3-9]\d{8}|01[3-9]\d{8})$/,
-    "Enter a valid Bangladeshi phone number",
-  ),
+  phone: z
+    .string()
+    .trim()
+    .regex(
+      /^(?:\+8801[3-9]\d{8}|8801[3-9]\d{8}|01[3-9]\d{8})$/,
+      "Enter a valid Bangladeshi phone number",
+    ),
 
   email: z.string().trim().email("Enter a valid email address"),
 });
@@ -59,13 +60,14 @@ const EMPTY: FormValues = {
 
 interface DoctorFormDialogProps {
   open: boolean;
-  onOpenChange: (open: boolean) => void; 
+  onOpenChange: (open: boolean) => void;
 }
 
 export function DoctorFormDialog({
   open,
-  onOpenChange, 
+  onOpenChange,
 }: DoctorFormDialogProps) {
+  const queryClient = useQueryClient();
   const { mutate: createDoctor, isPending } = useCreateDoctor();
 
   const form = useForm<FormValues>({
@@ -92,6 +94,9 @@ export function DoctorFormDialog({
 
     createDoctor(payload, {
       onSuccess: () => {
+        queryClient.invalidateQueries({
+          queryKey: ["doctors"],
+        });
         toast.success("Doctor Created Successfully", {
           description: "The new doctor has been added successfully.",
         });
@@ -198,7 +203,7 @@ export function DoctorFormDialog({
                 aria-invalid={Boolean(errors.hospital)}
                 {...form.register("hospital")}
               />
-  
+
               {errors.hospital && (
                 <p className="text-xs font-medium text-destructive">
                   {errors.hospital.message}

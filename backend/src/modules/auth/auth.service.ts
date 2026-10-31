@@ -70,10 +70,7 @@ const login = async (payload: LoginPayload) => {
 	});
 
 	if (!user) {
-		throw new AppError(
-			httpStatus.UNAUTHORIZED,
-			"Invalid email or password.",
-		);
+		throw new AppError(httpStatus.UNAUTHORIZED, "Invalid email or password.");
 	}
 
 	if (user.status === UserStatus.BLOCKED) {
@@ -87,10 +84,7 @@ const login = async (payload: LoginPayload) => {
 		user.password ?? (user as { passwordHash?: string }).passwordHash;
 
 	if (!storedPassword) {
-		throw new AppError(
-			httpStatus.UNAUTHORIZED,
-			"Invalid email or password.",
-		);
+		throw new AppError(httpStatus.UNAUTHORIZED, "Invalid email or password.");
 	}
 
 	const isPasswordMatched = await bcrypt.compare(
@@ -99,10 +93,7 @@ const login = async (payload: LoginPayload) => {
 	);
 
 	if (!isPasswordMatched) {
-		throw new AppError(
-			httpStatus.UNAUTHORIZED,
-			"Invalid email or password.",
-		);
+		throw new AppError(httpStatus.UNAUTHORIZED, "Invalid email or password.");
 	}
 
 	const jwtPayload = {
