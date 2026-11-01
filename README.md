@@ -13,7 +13,6 @@ Doctor Tracker is a secure, responsive administrative web application for managi
 - **Database performance:** MongoDB indexes and efficient query patterns for common searches and filters.
 - **Responsive UI:** Navigation and layouts designed for desktop and mobile screens.
 
-> Update this feature list to match the functionality actually implemented in your submitted version.
 
 ## Tech Stack
 
