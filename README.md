@@ -234,8 +234,6 @@ The frontend should use a single configured API client and a consistent data-fet
 - Use consistent error responses and avoid exposing stack traces in production.
 - Keep dependencies updated and avoid unnecessary frontend re-renders.
 
-Only retain statements that accurately describe the implementation.
-
 ## Visual Evidence
 
 ### Dashboard — Desktop
