@@ -260,8 +260,6 @@ Only retain statements that accurately describe the implementation.
 
 ## Deployment
 
-Fill in the actual production URLs before submission.
-
 - **Frontend:** `https://doctor-tracker-ui.vercel.app/`
 - **Backend API:** `https://doctor-tracker-backend-phi.vercel.app/`
 - **Frontend repository:** `https://github.com/imranh-dev1/doctor-tracker/tree/main/frontend`
