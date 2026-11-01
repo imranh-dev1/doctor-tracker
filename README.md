@@ -267,16 +267,10 @@ Only retain statements that accurately describe the implementation.
 
 ## Demo Credentials
 
-Provide a dedicated evaluation account only if appropriate and permitted.
-
 - **Email:** `admin@gmail.com`
 - **Password:** `admin@`
 
-Do not commit production credentials or real secrets to GitHub. If credentials are shared with the evaluator, use a dedicated test account with only the access needed for evaluation.
-
 ## Future Improvements
-
-Potential improvements, depending on project scope, include:
 
 - Automated tests for authentication and CRUD workflows
 - More detailed audit logs and analytics
