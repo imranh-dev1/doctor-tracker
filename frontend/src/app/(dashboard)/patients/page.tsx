@@ -1,7 +1,17 @@
+import { CreatePatientDialog } from "@/components/dilog/create-patient-dialog";
+import { PageHeader } from "@/components/shared/page-header";
+
 export default function PatientsPage() {
   return (
-    <div>
-      <h1>Patients Page</h1>
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <PageHeader
+          eyebrow="Directory"
+          title="Patients"
+          description="Monitor patient admission, clinical records, and assigned care teams across network hospitals."
+        />
+        <CreatePatientDialog />
+      </div>
     </div>
   );
 }

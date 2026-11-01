@@ -124,12 +124,10 @@ export function DoctorTable() {
 
   const [searchInput, setSearchInput] = useState(search ?? "");
 
-  // Keep search input synchronized with URL.
   useEffect(() => {
     setSearchInput(search ?? "");
   }, [search]);
 
-  // Debounced search.
   useEffect(() => {
     const timer = setTimeout(() => {
       const value = searchInput.trim();

@@ -43,5 +43,5 @@ const deleteDoctor = catchAsync(async (req: Request, res: Response) => {
 export const DoctorControllers = {
 	createDoctor,
 	getAllDoctors,
-	deleteDoctor
+	deleteDoctor,
 };

@@ -156,5 +156,5 @@ const deleteDoctor = async (id: string) => {
 export const DoctorServices = {
 	createDoctor,
 	getAllDoctors,
-	deleteDoctor
+	deleteDoctor,
 };
