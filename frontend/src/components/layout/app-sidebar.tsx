@@ -1,15 +1,18 @@
 "use client";
 
-import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { useQueryClient } from "@tanstack/react-query";
 import {
   LayoutDashboard,
   LogOut,
   Stethoscope,
-  Users,
   UserRound,
-  Loader2,
+  Users,
 } from "lucide-react";
+import Link from "next/link";
+import { usePathname, useRouter } from "next/navigation";
+import { toast } from "sonner";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
 import {
   Sidebar,
   SidebarContent,
@@ -23,13 +26,9 @@ import {
   SidebarMenuItem,
   SidebarRail,
 } from "@/components/ui/sidebar";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Button } from "@/components/ui/button";
-import { Logo } from "../shared/logo";
 import { useGetMe, useLogout } from "@/hooks";
 import AuthLoading from "../auth/auth-loading";
-import { toast } from "sonner";
-import { useQueryClient } from "@tanstack/react-query";
+import { Logo } from "../shared/logo";
 
 const NAV_ITEMS = [
   { title: "Dashboard", href: "/", icon: LayoutDashboard },
@@ -47,7 +46,7 @@ export function AppSidebar() {
   const user = data?.data;
 
   if (isLoading) {
-    <AuthLoading />;
+    return <AuthLoading />;
   }
 
   const handleLogout = () => {

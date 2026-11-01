@@ -3,6 +3,7 @@
 import { Eye, EyeOff } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
@@ -19,7 +20,6 @@ import {
 import { Input } from "@/components/ui/input";
 import { useGetMe, useLogin } from "@/hooks";
 import LoginImage from "../../../public/assest/login.jpg";
-import { useRouter } from "next/navigation";
 import AuthLoading from "../auth/auth-loading";
 
 type LoginFormValues = {
@@ -34,7 +34,7 @@ const DEMO_CREDENTIALS: LoginFormValues = {
 
 export function LoginForm() {
   const [showPassword, setShowPassword] = useState(false);
-  const { data: user, isLoading, isError } = useGetMe();
+  const { data: user, isLoading } = useGetMe();
   const { mutate: login, isPending } = useLogin();
   const router = useRouter();
 

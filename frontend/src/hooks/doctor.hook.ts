@@ -1,6 +1,6 @@
-import { createDoctor, deleteDoctor, getAllDoctor } from "@/api";
-import { GetAllDoctorsQuery } from "@/types";
 import { useMutation, useQuery } from "@tanstack/react-query";
+import { createDoctor, deleteDoctor, getAllDoctor } from "@/api";
+import type { GetAllDoctorsQuery } from "@/types";
 
 export function useCreateDoctor() {
   return useMutation({

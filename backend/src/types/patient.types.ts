@@ -18,4 +18,9 @@ export interface PatientQuery {
 	search?: string;
 	condition?: string;
 	doctorId?: string;
+	gender?: string;
+	fromDate?: string;
+	toDate?: string;
+	sortBy?: string;
+	sortOrder?: string;
 }

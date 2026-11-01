@@ -1,8 +1,13 @@
 "use client";
 
-import { useCallback, useEffect, useState, type ReactNode } from "react";
-import { Eye, MoreHorizontal, Pencil, Stethoscope, Trash2 } from "lucide-react";
+import { Eye, MoreHorizontal, Stethoscope, Trash2, Users } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { type ReactNode, useCallback, useEffect, useState } from "react";
+import { DeleteDoctorDialog } from "@/components/dilog/delete-doctor-dialog";
+import { DoctorPatientsSheet } from "@/components/dilog/doctor-patients-sheet";
+import DataPagination from "@/components/shared/pagination";
+import { SearchInput } from "@/components/shared/search-input";
+import { DoctorTableSkeleton } from "@/components/skeleton/doctor-table-skeleton";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
@@ -13,6 +18,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
@@ -28,24 +34,11 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-
-import { SearchInput } from "@/components/shared/search-input";
 import { useGetAllDoctors } from "@/hooks";
-import { specializations, type Doctor, type GetAllDoctorsQuery } from "@/types";
-
-import { DoctorTableSkeleton } from "../skeleton/doctor-table-skeleton";
-import DataPagination from "../shared/pagination";
-import { DeleteDoctorDialog } from "../dilog/delete-doctor-dialog";
+import { formatDate } from "@/lib/format";
+import { type Doctor, type GetAllDoctorsQuery, specializations } from "@/types";
 
 const limit = 10;
-
-function formatDate(date: string) {
-  return new Intl.DateTimeFormat("en-GB", {
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-  }).format(new Date(date));
-}
 
 function useDoctorFilters() {
   const router = useRouter();
@@ -59,6 +52,8 @@ function useDoctorFilters() {
     limit,
     search: searchParams.get("search") ?? "",
     specialization: searchParams.get("specialization") ?? "",
+    fromDate: searchParams.get("fromDate") ?? "",
+    toDate: searchParams.get("toDate") ?? "",
     sortBy: searchParams.get("sortBy") ?? "",
     sortOrder:
       rawSortOrder === "asc" || rawSortOrder === "desc"
@@ -67,8 +62,9 @@ function useDoctorFilters() {
   };
 
   const setFilters = useCallback(
-    (updates: Partial<Record<keyof GetAllDoctorsQuery, string | null>>) => {
+    (updates: Record<string, string | null>) => {
       const params = new URLSearchParams(searchParams.toString());
+
       if (!("page" in updates)) {
         params.delete("page");
       }
@@ -120,9 +116,12 @@ function StateMessage({
 export function DoctorTable() {
   const { filters, setFilters } = useDoctorFilters();
 
-  const { page, search, specialization, sortBy, sortOrder } = filters;
+  const { page, search, specialization, fromDate, toDate, sortBy, sortOrder } =
+    filters;
 
   const [searchInput, setSearchInput] = useState(search ?? "");
+  const [patientsDoctor, setPatientsDoctor] = useState<Doctor | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<Doctor | null>(null);
 
   useEffect(() => {
     setSearchInput(search ?? "");
@@ -140,12 +139,13 @@ export function DoctorTable() {
     return () => clearTimeout(timer);
   }, [searchInput, search, setFilters]);
 
-  // API query.
   const query: GetAllDoctorsQuery = {
     page,
     limit,
     search: search || undefined,
     specialization: specialization || undefined,
+    fromDate: fromDate || undefined,
+    toDate: toDate || undefined,
     sortBy: sortBy || undefined,
     sortOrder,
   };
@@ -156,7 +156,9 @@ export function DoctorTable() {
   const total = data?.data.meta.total ?? 0;
   const totalPages = data?.data.meta.totalPages ?? 1;
 
-  const hasFilters = Boolean(search || specialization || sortBy || sortOrder);
+  const hasFilters = Boolean(
+    search || specialization || fromDate || toDate || sortBy || sortOrder,
+  );
 
   const clearFilters = () => {
     setSearchInput("");
@@ -164,6 +166,8 @@ export function DoctorTable() {
     setFilters({
       search: null,
       specialization: null,
+      fromDate: null,
+      toDate: null,
       sortBy: null,
       sortOrder: null,
     });
@@ -178,76 +182,118 @@ export function DoctorTable() {
   return (
     <Card className="overflow-hidden border-border/70 shadow-sm">
       <CardHeader className="gap-4 border-b bg-muted/20 px-4 py-5 sm:px-6">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-          <SearchInput
-            value={searchInput}
-            onChange={setSearchInput}
-            placeholder="Search name, email, phone, Specialization, Hospital..."
-            className="sm:max-w-sm"
-          />
+        <div className="flex flex-col gap-3">
+          <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
+            <SearchInput
+              value={searchInput}
+              onChange={setSearchInput}
+              placeholder="Search name, email, phone, specialization, hospital..."
+              className="lg:max-w-md"
+            />
 
-          <Select
-            value={specialization || "all"}
-            onValueChange={(value) =>
-              setFilters({
-                specialization: value === "all" ? null : value,
-              })
-            }
-          >
-            <SelectTrigger className="h-10 w-full sm:w-47.5">
-              <SelectValue placeholder="All specializations" />
-            </SelectTrigger>
+            <Select
+              value={specialization || "all"}
+              onValueChange={(value) =>
+                setFilters({
+                  specialization: value === "all" ? null : value,
+                })
+              }
+            >
+              <SelectTrigger className="h-10 w-full lg:w-[200px]">
+                <SelectValue placeholder="All specializations" />
+              </SelectTrigger>
 
-            <SelectContent>
-              <SelectItem value="all">All specializations</SelectItem>
+              <SelectContent>
+                <SelectItem value="all">All specializations</SelectItem>
 
-              {specializations.map((item) => (
-                <SelectItem key={item} value={item}>
-                  {item}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+                {specializations.map((item) => (
+                  <SelectItem key={item} value={item}>
+                    {item}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
 
-          <Select
-            value={sortBy || "none"}
-            onValueChange={(value) =>
-              setFilters({
-                sortBy: value === "none" ? null : value,
-              })
-            }
-          >
-            <SelectTrigger className="h-10 w-full sm:w-[150px]">
-              <SelectValue placeholder="Sort by" />
-            </SelectTrigger>
+            <Select
+              value={sortBy || "none"}
+              onValueChange={(value) =>
+                setFilters({
+                  sortBy: value === "none" ? null : value,
+                })
+              }
+            >
+              <SelectTrigger className="h-10 w-full lg:w-[150px]">
+                <SelectValue placeholder="Sort by" />
+              </SelectTrigger>
 
-            <SelectContent>
-              <SelectItem value="none">Sorting</SelectItem>
-              <SelectItem value="name">Name</SelectItem>
-              <SelectItem value="createdAt">Date</SelectItem>
-            </SelectContent>
-          </Select>
+              <SelectContent>
+                <SelectItem value="none">Sorting</SelectItem>
+                <SelectItem value="name">Name</SelectItem>
+                <SelectItem value="createdAt">Date added</SelectItem>
+                <SelectItem value="hospital">Hospital</SelectItem>
+              </SelectContent>
+            </Select>
 
-          {/* Sort order */}
-          <Select
-            value={sortOrder ?? "desc"}
-            onValueChange={(value) =>
-              setFilters({
-                sortOrder: value,
-              })
-            }
-          >
-            <SelectTrigger className="h-10 w-full sm:w-[130px]">
-              <SelectValue placeholder="Sort order" />
-            </SelectTrigger>
+            <Select
+              value={sortOrder ?? "desc"}
+              onValueChange={(value) => setFilters({ sortOrder: value })}
+            >
+              <SelectTrigger className="h-10 w-full lg:w-[130px]">
+                <SelectValue placeholder="Sort order" />
+              </SelectTrigger>
 
-            <SelectContent>
-              <SelectItem value="asc">Ascending</SelectItem>
-              <SelectItem value="desc">Descending</SelectItem>
-            </SelectContent>
-          </Select>
+              <SelectContent>
+                <SelectItem value="asc">Ascending</SelectItem>
+                <SelectItem value="desc">Descending</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
 
-          {clearButton}
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
+            <div className="grid flex-1 gap-3 sm:grid-cols-2">
+              <div className="space-y-1.5">
+                <label
+                  htmlFor="doctor-from-date"
+                  className="text-[11px] font-medium uppercase tracking-[0.12em] text-muted-foreground"
+                >
+                  Added from
+                </label>
+
+                <Input
+                  id="doctor-from-date"
+                  type="date"
+                  value={fromDate ?? ""}
+                  max={toDate || undefined}
+                  onChange={(event) =>
+                    setFilters({ fromDate: event.target.value || null })
+                  }
+                  className="h-9"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <label
+                  htmlFor="doctor-to-date"
+                  className="text-[11px] font-medium uppercase tracking-[0.12em] text-muted-foreground"
+                >
+                  Added until
+                </label>
+
+                <Input
+                  id="doctor-to-date"
+                  type="date"
+                  value={toDate ?? ""}
+                  min={fromDate || undefined}
+                  onChange={(event) =>
+                    setFilters({ toDate: event.target.value || null })
+                  }
+                  className="h-9"
+                />
+              </div>
+            </div>
+
+            {clearButton && <div className="sm:pb-1">{clearButton}</div>}
+          </div>
         </div>
       </CardHeader>
 
@@ -276,20 +322,16 @@ export function DoctorTable() {
               <Table>
                 <TableHeader>
                   <TableRow className="bg-muted/30 hover:bg-muted/30">
-                    <TableHead className="min-w-[240px] pl-4 sm:pl-6">
+                    <TableHead className="min-w-[220px] pl-4 sm:pl-6">
                       Doctor
                     </TableHead>
-
                     <TableHead className="min-w-[140px]">Phone</TableHead>
-
                     <TableHead className="min-w-[150px]">
                       Specialization
                     </TableHead>
-
-                    <TableHead className="min-w-[180px]">Hospital</TableHead>
-
+                    <TableHead className="min-w-[170px]">Hospital</TableHead>
+                    <TableHead className="min-w-[110px]">Patients</TableHead>
                     <TableHead className="min-w-[120px]">Date added</TableHead>
-
                     <TableHead className="w-[70px] pr-4 text-right sm:pr-6">
                       Actions
                     </TableHead>
@@ -297,19 +339,14 @@ export function DoctorTable() {
                 </TableHeader>
 
                 <TableBody>
-                  {doctors.map((doctor: Doctor) => (
+                  {doctors.map((doctor) => (
                     <TableRow key={doctor._id}>
                       <TableCell className="pl-4 sm:pl-6">
-                        <div className="flex items-center gap-3">
-                          <div className="min-w-0">
-                            <p className="truncate font-medium">
-                              {doctor.name}
-                            </p>
-
-                            <p className="truncate text-xs text-muted-foreground">
-                              {doctor.email}
-                            </p>
-                          </div>
+                        <div className="min-w-0">
+                          <p className="truncate font-medium">{doctor.name}</p>
+                          <p className="truncate text-xs text-muted-foreground">
+                            {doctor.email}
+                          </p>
                         </div>
                       </TableCell>
 
@@ -328,16 +365,51 @@ export function DoctorTable() {
                         {doctor.hospital}
                       </TableCell>
 
+                      <TableCell>
+                        <button
+                          type="button"
+                          onClick={() => setPatientsDoctor(doctor)}
+                          className="inline-flex items-center gap-1.5 text-sm text-primary hover:underline"
+                        >
+                          <Users className="size-3.5" />
+                          {doctor.patientCount ?? 0}
+                        </button>
+                      </TableCell>
+
                       <TableCell className="text-sm text-muted-foreground">
                         {formatDate(doctor.createdAt)}
                       </TableCell>
 
-                      <TableCell className="">
-                        <DeleteDoctorDialog
-                          doctorId={doctor._id}
-                          doctorName={doctor.name}
-                          key={doctor._id}
-                        />
+                      <TableCell className="pr-4 text-right sm:pr-6">
+                        <DropdownMenu>
+                          <DropdownMenuTrigger
+                            render={
+                              <Button variant="ghost" size="icon">
+                                <MoreHorizontal className="size-4" />
+                                <span className="sr-only">Open actions</span>
+                              </Button>
+                            }
+                          />
+
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem
+                              onClick={() => setPatientsDoctor(doctor)}
+                            >
+                              <Eye className="mr-2 size-4" />
+                              View patients
+                            </DropdownMenuItem>
+
+                            <DropdownMenuSeparator />
+
+                            <DropdownMenuItem
+                              variant="destructive"
+                              onClick={() => setDeleteTarget(doctor)}
+                            >
+                              <Trash2 className="mr-2 size-4" />
+                              Delete doctor
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
                       </TableCell>
                     </TableRow>
                   ))}
@@ -345,7 +417,6 @@ export function DoctorTable() {
               </Table>
             </div>
 
-            {/* Pagination */}
             <div className="border-t px-4 py-4">
               <DataPagination
                 content="doctors"
@@ -355,15 +426,34 @@ export function DoctorTable() {
                 limit={limit}
                 isPending={isPending}
                 onPageChange={(nextPage) => {
-                  setFilters({
-                    page: String(nextPage),
-                  });
+                  setFilters({ page: String(nextPage) });
                 }}
               />
             </div>
           </>
         )}
       </CardContent>
+
+      <DoctorPatientsSheet
+        doctor={patientsDoctor}
+        open={Boolean(patientsDoctor)}
+        onOpenChange={(open) => {
+          if (!open) {
+            setPatientsDoctor(null);
+          }
+        }}
+      />
+
+      <DeleteDoctorDialog
+        doctorId={deleteTarget?._id ?? null}
+        doctorName={deleteTarget?.name}
+        open={Boolean(deleteTarget)}
+        onOpenChange={(open) => {
+          if (!open) {
+            setDeleteTarget(null);
+          }
+        }}
+      />
     </Card>
   );
 }

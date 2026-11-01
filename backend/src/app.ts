@@ -7,6 +7,7 @@ import { notFound } from "./middlewares/not-found";
 import { globalErrorHandler } from "./middlewares/globalErrorHandler";
 import { DoctorRoutes } from "./modules/doctor/doctor.routes";
 import { PatientRoutes } from "./modules/patient/patient.routes";
+import { DashboardRoutes } from "./modules/dashboard/dashboard.routes";
 
 const app = express();
 
@@ -32,6 +33,7 @@ app.get("/", (req, res) => {
 app.use("/api/auth", AuthRoutes);
 app.use("/api/doctor", DoctorRoutes);
 app.use("/api/patient", PatientRoutes);
+app.use("/api/dashboard", DashboardRoutes);
 
 app.use(notFound);
 app.use(globalErrorHandler);

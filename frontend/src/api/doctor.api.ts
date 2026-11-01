@@ -1,19 +1,28 @@
 import apiClint from "@/lib/apiClient";
-import { CreateDoctorPayload, GetAllDoctorsQuery } from "@/types";
+import type {
+  ApiResponse,
+  CreateDoctorPayload,
+  Doctor,
+  GetAllDoctorsQuery,
+  ListResult,
+} from "@/types";
 
 export function createDoctor(payload: CreateDoctorPayload) {
-  return apiClint("/doctor", { method: "POST", body: payload });
+  return apiClint<ApiResponse<Doctor>>("/doctor", {
+    method: "POST",
+    body: payload,
+  });
 }
 
-export function getAllDoctor(params?: GetAllDoctorsQuery) {
-  return apiClint("/doctor", {
+export function getAllDoctor(query?: GetAllDoctorsQuery) {
+  return apiClint<ApiResponse<ListResult<Doctor>>>("/doctor", {
     method: "GET",
-    query: params,
+    query,
   });
 }
 
 export function deleteDoctor(id: string) {
-  return apiClint(`/doctor/${id}`, {
+  return apiClint<ApiResponse<Doctor>>(`/doctor/${id}`, {
     method: "DELETE",
   });
 }

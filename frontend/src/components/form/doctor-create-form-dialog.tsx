@@ -1,10 +1,11 @@
 "use client";
-import { useEffect } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
-import { z } from "zod";
+import { useQueryClient } from "@tanstack/react-query";
 import { Loader2, Save, Stethoscope } from "lucide-react";
-
+import { useEffect } from "react";
+import { useForm } from "react-hook-form";
+import { toast } from "sonner";
+import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -17,10 +18,8 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { NativeSelect } from "@/components/ui/native-select";
-import { specializations } from "@/types";
 import { useCreateDoctor } from "@/hooks/doctor.hook";
-import { toast } from "sonner";
-import { useQueryClient } from "@tanstack/react-query";
+import { specializations } from "@/types";
 
 const schema = z.object({
   name: z

@@ -23,6 +23,8 @@ export interface GetAllDoctorsQuery {
 	search?: string;
 	specialization?: string;
 	hospital?: string;
+	fromDate?: string;
+	toDate?: string;
 	sortBy?: string;
 	sortOrder?: string;
 }

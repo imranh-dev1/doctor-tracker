@@ -1,10 +1,9 @@
 "use client";
 
+import { ArrowLeft, ArrowRight, Home } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, ArrowRight, HeartPulse, Home, SearchX } from "lucide-react";
-
-import { Badge } from "@/components/ui/badge";
+import { Logo } from "@/components/shared/logo";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -15,7 +14,6 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { Logo } from "@/components/shared/logo";
 
 export default function NotFound() {
   const router = useRouter();

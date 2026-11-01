@@ -1,7 +1,7 @@
 "use client";
 
-import { Trash2 } from "lucide-react";
-import { useState } from "react";
+import { Loader2, Trash2 } from "lucide-react";
+import { toast } from "sonner";
 
 import {
   AlertDialog,
@@ -13,35 +13,33 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Button } from "@/components/ui/button";
-import { useQueryClient } from "@tanstack/react-query";
 import { useDeleteDoctor } from "@/hooks";
-import { toast } from "sonner";
 
 interface DeleteDoctorDialogProps {
-  doctorId: string;
-  doctorName: string;
+  doctorId: string | null;
+  doctorName?: string;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
 }
 
 export function DeleteDoctorDialog({
   doctorId,
   doctorName,
+  open,
+  onOpenChange,
 }: DeleteDoctorDialogProps) {
-  const [open, setOpen] = useState(false);
-  const queryClient = useQueryClient();
   const { mutate: deleteDoctor, isPending } = useDeleteDoctor();
 
   const handleDelete = () => {
+    if (!doctorId) {
+      return;
+    }
+
     deleteDoctor(doctorId, {
       onSuccess: () => {
-        queryClient.invalidateQueries({
-          queryKey: ["doctors"],
-        });
-        setOpen(false);
-
         toast.success("Doctor deleted successfully.");
+        onOpenChange(false);
       },
-
       onError: (error) => {
         toast.error(
           error instanceof Error ? error.message : "Failed to delete doctor.",
@@ -51,36 +49,37 @@ export function DeleteDoctorDialog({
   };
 
   return (
-    <AlertDialog open={open} onOpenChange={setOpen}>
-      <Button
-        variant="ghost"
-        size="sm"
-        className="w-full justify-start text-destructive hover:text-destructive"
-        onClick={() => setOpen(true)}
-      >
-        <Trash2 className="mr-2 size-4" />
-        Delete
-      </Button>
-
+    <AlertDialog open={open} onOpenChange={onOpenChange}>
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>Delete doctor?</AlertDialogTitle>
 
           <AlertDialogDescription>
             Are you sure you want to delete{" "}
-            <span className="font-semibold text-foreground">{doctorName}</span>?
-            This action cannot be undone.
+            <span className="font-semibold text-foreground">
+              {doctorName ?? "this doctor"}
+            </span>
+            ? Their patient records will also be removed. This action cannot be
+            undone.
           </AlertDialogDescription>
         </AlertDialogHeader>
 
         <AlertDialogFooter>
-          <AlertDialogCancel>Cancel</AlertDialogCancel>
+          <AlertDialogCancel disabled={isPending}>Cancel</AlertDialogCancel>
 
           <AlertDialogAction
-            onClick={handleDelete}
-            className="bg-destructive text-destructive-foreground hover:bg-destructive/90 text-white"
+            onClick={(event) => {
+              event.preventDefault();
+              handleDelete();
+            }}
+            disabled={isPending}
+            className="bg-destructive text-white hover:bg-destructive/90"
           >
-            <Trash2 className="mr-2 size-4" />
+            {isPending ? (
+              <Loader2 className="mr-2 size-4 animate-spin" />
+            ) : (
+              <Trash2 className="mr-2 size-4" />
+            )}
             Delete
           </AlertDialogAction>
         </AlertDialogFooter>

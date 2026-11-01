@@ -1,17 +1,31 @@
 "use client";
 
-import { useState } from "react";
-import {
-  MoreHorizontal,
-  Search,
-  Eye,
-  Pencil,
-  Trash2,
-  Users,
-} from "lucide-react";
-
-import { Input } from "@/components/ui/input";
+import { MoreHorizontal, Pencil, Trash2, Users } from "lucide-react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { type ReactNode, useCallback, useEffect, useState } from "react";
+import { DeletePatientDialog } from "@/components/dilog/delete-patient-dialog";
+import { EditPatientDialog } from "@/components/dilog/edit-patient-dialog";
+import DataPagination from "@/components/shared/pagination";
+import { SearchInput } from "@/components/shared/search-input";
+import { PatientTableSkeleton } from "@/components/skeleton/patient-table-skeleton";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   Table,
   TableBody,
@@ -20,253 +34,496 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Badge } from "@/components/ui/badge";
-import { PatientQuery } from "@/types/patient.types";
-import { useGetPatients } from "@/hooks";
-import { PatientTableSkeleton } from "../skeleton/patient-table-skeleton";
+import { useGetPatientConditions, useGetPatients } from "@/hooks";
+import { formatDate, initials } from "@/lib/format";
+import type { Patient, PatientQuery } from "@/types";
+
+const limit = 10;
+
+const GENDERS = ["MALE", "FEMALE", "OTHER"] as const;
+
+function usePatientFilters() {
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+
+  const rawSortOrder = searchParams.get("sortOrder");
+  const rawSortBy = searchParams.get("sortBy");
+  const rawGender = searchParams.get("gender");
+
+  const filters: PatientQuery = {
+    page: Math.max(1, Number(searchParams.get("page")) || 1),
+    limit,
+    search: searchParams.get("search") ?? "",
+    condition: searchParams.get("condition") ?? "",
+    doctorId: searchParams.get("doctorId") ?? "",
+    gender: GENDERS.includes(rawGender as (typeof GENDERS)[number])
+      ? (rawGender as PatientQuery["gender"])
+      : undefined,
+    fromDate: searchParams.get("fromDate") ?? "",
+    toDate: searchParams.get("toDate") ?? "",
+    sortBy: ["name", "age", "condition", "createdAt"].includes(rawSortBy ?? "")
+      ? (rawSortBy as PatientQuery["sortBy"])
+      : undefined,
+    sortOrder:
+      rawSortOrder === "asc" || rawSortOrder === "desc"
+        ? rawSortOrder
+        : undefined,
+  };
+
+  const setFilters = useCallback(
+    (updates: Record<string, string | null>) => {
+      const params = new URLSearchParams(searchParams.toString());
+
+      if (!("page" in updates)) {
+        params.delete("page");
+      }
+
+      Object.entries(updates).forEach(([key, value]) => {
+        if (value) {
+          params.set(key, value);
+        } else {
+          params.delete(key);
+        }
+      });
+
+      const query = params.toString();
+
+      router.replace(query ? `${pathname}?${query}` : pathname, {
+        scroll: false,
+      });
+    },
+    [pathname, router, searchParams],
+  );
+
+  return { filters, setFilters };
+}
+
+function StateMessage({
+  title,
+  description,
+  action,
+}: {
+  title: string;
+  description: string;
+  action?: ReactNode;
+}) {
+  return (
+    <div className="flex flex-col items-center justify-center gap-2 px-4 py-16 text-center">
+      <div className="rounded-full bg-muted p-3">
+        <Users className="size-5 text-muted-foreground" />
+      </div>
+
+      <p className="font-medium">{title}</p>
+
+      <p className="max-w-sm text-sm text-muted-foreground">{description}</p>
+
+      {action}
+    </div>
+  );
+}
 
 export function PatientTable() {
-  const [search, setSearch] = useState("");
-  const [condition, setCondition] = useState("all");
-  const [page, setPage] = useState(1);
+  const { filters, setFilters } = usePatientFilters();
 
-  const limit = 10;
+  const {
+    page,
+    search,
+    condition,
+    gender,
+    fromDate,
+    toDate,
+    sortBy,
+    sortOrder,
+    doctorId,
+  } = filters;
+
+  const [searchInput, setSearchInput] = useState(search ?? "");
+  const [editPatient, setEditPatient] = useState<Patient | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<Patient | null>(null);
+
+  const { data: conditionsResponse } = useGetPatientConditions();
+
+  useEffect(() => {
+    setSearchInput(search ?? "");
+  }, [search]);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      const value = searchInput.trim();
+
+      if (value !== search) {
+        setFilters({ search: value || null });
+      }
+    }, 350);
+
+    return () => clearTimeout(timer);
+  }, [searchInput, search, setFilters]);
 
   const query: PatientQuery = {
     page,
     limit,
-    ...(search && { search }),
-    ...(condition !== "all" && { condition }),
+    search: search || undefined,
+    condition: condition || undefined,
+    gender,
+    fromDate: fromDate || undefined,
+    toDate: toDate || undefined,
+    sortBy,
+    sortOrder,
+    doctorId: doctorId || undefined,
   };
 
-  const { data, isPending, isError } = useGetPatients(query);
+  const { data, isPending, isError, refetch } = useGetPatients(query);
 
-  const patients = data?.data?.data ?? [];
-  const meta = data?.data?.meta;
+  const patients = data?.data.result ?? [];
+  const meta = data?.data.meta;
+  const conditions = conditionsResponse?.data ?? [];
 
-  console.log(patients);
-  
+  const hasFilters = Boolean(
+    search || condition || gender || fromDate || toDate || sortBy || doctorId,
+  );
+
+  const clearFilters = () => {
+    setSearchInput("");
+
+    setFilters({
+      search: null,
+      condition: null,
+      gender: null,
+      fromDate: null,
+      toDate: null,
+      sortBy: null,
+      sortOrder: null,
+      doctorId: null,
+    });
+  };
+
+  const clearButton = hasFilters ? (
+    <Button variant="outline" size="sm" onClick={clearFilters}>
+      Clear filters
+    </Button>
+  ) : null;
 
   return (
-    <div className="space-y-5">
-      {/* Search and Filters */}
-      <div className="flex flex-col gap-3 sm:flex-row">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+    <Card className="overflow-hidden border-border/70 shadow-sm">
+      <CardHeader className="gap-4 border-b bg-muted/20 px-4 py-5 sm:px-6">
+        {doctorId && (
+          <div className="flex flex-wrap items-center justify-between gap-2 rounded-md border border-primary/20 bg-primary/5 px-3 py-2 text-sm">
+            <span className="text-muted-foreground">
+              Showing patients assigned to the selected doctor.
+            </span>
 
-          <Input
-            placeholder="Search patients..."
-            value={search}
-            onChange={(event) => {
-              setSearch(event.target.value);
-              setPage(1);
-            }}
-            className="pl-9"
-          />
-        </div>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setFilters({ doctorId: null })}
+            >
+              Show all patients
+            </Button>
+          </div>
+        )}
 
-        <Select
-          value={condition}
-          onValueChange={(value) => {
-            setCondition(value ?? "all");
-            setPage(1);
-          }}
-        >
-          <SelectTrigger className="w-full sm:w-[200px]">
-            <SelectValue placeholder="Filter by condition" />
-          </SelectTrigger>
+        <div className="flex flex-col gap-3">
+          <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
+            <SearchInput
+              value={searchInput}
+              onChange={setSearchInput}
+              placeholder="Search name, email, phone or condition..."
+              className="lg:max-w-sm"
+            />
 
-          <SelectContent>
-            <SelectItem value="all">All conditions</SelectItem>
-            <SelectItem value="Diabetes">Diabetes</SelectItem>
-            <SelectItem value="Hypertension">Hypertension</SelectItem>
-            <SelectItem value="Asthma">Asthma</SelectItem>
-            <SelectItem value="Routine checkup">Routine checkup</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
+            <Select
+              value={condition || "all"}
+              onValueChange={(value) =>
+                setFilters({
+                  condition: value === "all" ? null : value,
+                })
+              }
+            >
+              <SelectTrigger className="h-10 w-full lg:w-[190px]">
+                <SelectValue placeholder="All conditions" />
+              </SelectTrigger>
 
-      {/* Table */}
-      <div className="overflow-hidden border">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Patient</TableHead>
-              <TableHead>Contact</TableHead>
-              <TableHead>Condition</TableHead>
-              <TableHead>Assigned Doctor</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
-            </TableRow>
-          </TableHeader>
+              <SelectContent>
+                <SelectItem value="all">All conditions</SelectItem>
 
-          <TableBody>
-            {isPending ? (
-              <PatientTableSkeleton />
-            ) : isError ? (
-              <TableRow>
-                <TableCell colSpan={6} className="h-32 text-center">
-                  Failed to load patients. Please try again.
-                </TableCell>
-              </TableRow>
-            ) : patients.length === 0 ? (
-              <TableRow>
-                <TableCell
-                  colSpan={6}
-                  className="h-32 text-center text-muted-foreground"
+                {conditions.map((item) => (
+                  <SelectItem key={item} value={item}>
+                    {item}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            <Select
+              value={gender ?? "all"}
+              onValueChange={(value) =>
+                setFilters({ gender: value === "all" ? null : value })
+              }
+            >
+              <SelectTrigger className="h-10 w-full lg:w-[150px]">
+                <SelectValue placeholder="All genders" />
+              </SelectTrigger>
+
+              <SelectContent>
+                <SelectItem value="all">All genders</SelectItem>
+                <SelectItem value="MALE">Male</SelectItem>
+                <SelectItem value="FEMALE">Female</SelectItem>
+                <SelectItem value="OTHER">Other</SelectItem>
+              </SelectContent>
+            </Select>
+
+            <Select
+              value={sortBy ?? "none"}
+              onValueChange={(value) =>
+                setFilters({ sortBy: value === "none" ? null : value })
+              }
+            >
+              <SelectTrigger className="h-10 w-full lg:w-[150px]">
+                <SelectValue placeholder="Sort by" />
+              </SelectTrigger>
+
+              <SelectContent>
+                <SelectItem value="none">Sorting</SelectItem>
+                <SelectItem value="createdAt">Date added</SelectItem>
+                <SelectItem value="name">Name</SelectItem>
+                <SelectItem value="age">Age</SelectItem>
+                <SelectItem value="condition">Condition</SelectItem>
+              </SelectContent>
+            </Select>
+
+            <Select
+              value={sortOrder ?? "desc"}
+              onValueChange={(value) => setFilters({ sortOrder: value })}
+            >
+              <SelectTrigger className="h-10 w-full lg:w-[130px]">
+                <SelectValue placeholder="Sort order" />
+              </SelectTrigger>
+
+              <SelectContent>
+                <SelectItem value="asc">Ascending</SelectItem>
+                <SelectItem value="desc">Descending</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
+            <div className="grid flex-1 gap-3 sm:grid-cols-2">
+              <div className="space-y-1.5">
+                <label
+                  htmlFor="patient-from-date"
+                  className="text-[11px] font-medium uppercase tracking-[0.12em] text-muted-foreground"
                 >
-                  No patients found.
-                </TableCell>
-              </TableRow>
-            ) : (
-              patients.map((patient: any) => (
-                <TableRow key={patient._id}>
-                  <TableCell>
-                    <div className="flex items-center gap-3">
-                      <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-primary/10 font-semibold text-primary">
-                        {patient.name
-                          .split(" ")
-                          .map((part: string) => part[0])
-                          .join("")
-                          .slice(0, 2)
-                          .toUpperCase()}
-                      </div>
+                  Registered from
+                </label>
 
-                      <div>
-                        <p className="font-medium">{patient.name}</p>
-                        <p className="text-xs text-muted-foreground">
-                          {patient.age} years · {patient.gender}
-                        </p>
-                      </div>
-                    </div>
-                  </TableCell>
+                <Input
+                  id="patient-from-date"
+                  type="date"
+                  value={fromDate ?? ""}
+                  max={toDate || undefined}
+                  onChange={(event) =>
+                    setFilters({ fromDate: event.target.value || null })
+                  }
+                  className="h-9"
+                />
+              </div>
 
-                  <TableCell>
-                    <div className="space-y-1">
-                      <p className="text-sm">{patient.phone}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {patient.email}
-                      </p>
-                    </div>
-                  </TableCell>
+              <div className="space-y-1.5">
+                <label
+                  htmlFor="patient-to-date"
+                  className="text-[11px] font-medium uppercase tracking-[0.12em] text-muted-foreground"
+                >
+                  Registered until
+                </label>
 
-                  <TableCell>
-                    <Badge variant="secondary">{patient.condition}</Badge>
-                  </TableCell>
+                <Input
+                  id="patient-to-date"
+                  type="date"
+                  value={toDate ?? ""}
+                  min={fromDate || undefined}
+                  onChange={(event) =>
+                    setFilters({ toDate: event.target.value || null })
+                  }
+                  className="h-9"
+                />
+              </div>
+            </div>
 
-                  <TableCell>
-                    <span className="text-sm">
-                      {patient.doctor?.name ?? "Unassigned"}
-                    </span>
-                  </TableCell>
-
-                  <TableCell>
-                    <Badge
-                      variant={
-                        patient.status === "ACTIVE" ? "default" : "destructive"
-                      }
-                    >
-                      {patient.status ?? "ACTIVE"}
-                    </Badge>
-                  </TableCell>
-
-                  <TableCell className="text-right">
-                    <DropdownMenu>
-                      <DropdownMenuTrigger >
-                        <Button variant="ghost" size="icon">
-                          <MoreHorizontal className="size-4" />
-                          <span className="sr-only">Open actions</span>
-                        </Button>
-                      </DropdownMenuTrigger>
-
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem
-                          onClick={() => {
-                            // Navigate to patient details page.
-                            window.location.href = `/admin/patients/${patient._id}`;
-                          }}
-                        >
-                          <Eye className="mr-2 size-4" />
-                          View details
-                        </DropdownMenuItem>
-
-                        <DropdownMenuItem
-                          onClick={() => {
-                            // Connect your edit dialog here.
-                            window.location.href = `/admin/patients/${patient._id}/edit`;
-                          }}
-                        >
-                          <Pencil className="mr-2 size-4" />
-                          Edit patient
-                        </DropdownMenuItem>
-
-                        {/* <DropdownMenuItem
-                          className="text-destructive focus:text-destructive"
-                          disabled={deleteMutation.isPending}
-                          onClick={() => handleDelete(patient._id)}
-                        >
-                          <Trash2 className="mr-2 size-4" />
-                          Delete patient
-                        </DropdownMenuItem> */}
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </TableCell>
-                </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
-      </div>
-
-      {/* Pagination */}
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <p className="text-sm text-muted-foreground">
-          Showing {patients.length} of {meta?.total ?? patients.length} patients
-        </p>
-
-        <div className="flex items-center gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            disabled={page <= 1 || isPending}
-            onClick={() => setPage((current) => current - 1)}
-          >
-            Previous
-          </Button>
-
-          <span className="text-sm">
-            Page {page}
-            {meta?.totalPages ? ` of ${meta.totalPages}` : ""}
-          </span>
-
-          <Button
-            variant="outline"
-            size="sm"
-            disabled={
-              isPending ||
-              (meta?.totalPages
-                ? page >= meta.totalPages
-                : patients.length < limit)
-            }
-            onClick={() => setPage((current) => current + 1)}
-          >
-            Next
-          </Button>
+            {clearButton && <div className="sm:pb-1">{clearButton}</div>}
+          </div>
         </div>
-      </div>
-    </div>
+      </CardHeader>
+
+      <CardContent className="p-0">
+        {isPending ? (
+          <PatientTableSkeleton />
+        ) : isError ? (
+          <StateMessage
+            title="Unable to load patients"
+            description="Something went wrong while fetching the patient list."
+            action={
+              <Button variant="outline" onClick={() => refetch()}>
+                Try again
+              </Button>
+            }
+          />
+        ) : patients.length === 0 ? (
+          <StateMessage
+            title="No patients found"
+            description="Try changing your search or filters."
+            action={clearButton}
+          />
+        ) : (
+          <>
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow className="bg-muted/30 hover:bg-muted/30">
+                    <TableHead className="min-w-[220px] pl-4 sm:pl-6">
+                      Patient
+                    </TableHead>
+                    <TableHead className="min-w-[190px]">Contact</TableHead>
+                    <TableHead className="min-w-[140px]">Condition</TableHead>
+                    <TableHead className="min-w-[180px]">
+                      Assigned doctor
+                    </TableHead>
+                    <TableHead className="min-w-[120px]">Registered</TableHead>
+                    <TableHead className="w-[70px] pr-4 text-right sm:pr-6">
+                      Actions
+                    </TableHead>
+                  </TableRow>
+                </TableHeader>
+
+                <TableBody>
+                  {patients.map((patient) => (
+                    <TableRow key={patient._id}>
+                      <TableCell className="pl-4 sm:pl-6">
+                        <div className="flex items-center gap-3">
+                          <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-semibold text-primary">
+                            {initials(patient.name)}
+                          </span>
+
+                          <div className="min-w-0">
+                            <p className="truncate font-medium">
+                              {patient.name}
+                            </p>
+                            <p className="text-xs text-muted-foreground">
+                              {patient.age} years · {patient.gender}
+                            </p>
+                          </div>
+                        </div>
+                      </TableCell>
+
+                      <TableCell>
+                        <div className="min-w-0 space-y-0.5">
+                          <p className="truncate text-sm">{patient.phone}</p>
+                          <p className="truncate text-xs text-muted-foreground">
+                            {patient.email}
+                          </p>
+                        </div>
+                      </TableCell>
+
+                      <TableCell>
+                        <Badge
+                          variant="secondary"
+                          className="whitespace-nowrap"
+                        >
+                          {patient.condition}
+                        </Badge>
+                      </TableCell>
+
+                      <TableCell>
+                        <div className="min-w-0">
+                          <p className="truncate text-sm">
+                            {patient.doctor?.name ?? "Unassigned"}
+                          </p>
+                          {patient.doctor?.specialization && (
+                            <p className="truncate text-xs text-muted-foreground">
+                              {patient.doctor.specialization}
+                            </p>
+                          )}
+                        </div>
+                      </TableCell>
+
+                      <TableCell className="text-sm text-muted-foreground">
+                        {formatDate(patient.createdAt)}
+                      </TableCell>
+
+                      <TableCell className="pr-4 text-right sm:pr-6">
+                        <DropdownMenu>
+                          <DropdownMenuTrigger
+                            render={
+                              <Button variant="ghost" size="icon">
+                                <MoreHorizontal className="size-4" />
+                                <span className="sr-only">Open actions</span>
+                              </Button>
+                            }
+                          />
+
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem
+                              onClick={() => setEditPatient(patient)}
+                            >
+                              <Pencil className="mr-2 size-4" />
+                              Edit patient
+                            </DropdownMenuItem>
+
+                            <DropdownMenuSeparator />
+
+                            <DropdownMenuItem
+                              variant="destructive"
+                              onClick={() => setDeleteTarget(patient)}
+                            >
+                              <Trash2 className="mr-2 size-4" />
+                              Delete patient
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+
+            <div className="border-t px-4 py-4">
+              <DataPagination
+                content="patients"
+                page={page ?? 1}
+                totalPages={meta?.totalPages ?? 1}
+                total={meta?.total ?? 0}
+                limit={limit}
+                isPending={isPending}
+                onPageChange={(nextPage) =>
+                  setFilters({ page: String(nextPage) })
+                }
+              />
+            </div>
+          </>
+        )}
+      </CardContent>
+
+      <EditPatientDialog
+        patient={editPatient}
+        open={Boolean(editPatient)}
+        onOpenChange={(open) => {
+          if (!open) {
+            setEditPatient(null);
+          }
+        }}
+      />
+
+      <DeletePatientDialog
+        patientId={deleteTarget?._id ?? null}
+        patientName={deleteTarget?.name}
+        open={Boolean(deleteTarget)}
+        onOpenChange={(open) => {
+          if (!open) {
+            setDeleteTarget(null);
+          }
+        }}
+      />
+    </Card>
   );
 }

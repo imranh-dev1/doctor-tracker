@@ -1,10 +1,10 @@
 "use client";
-import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { PageHeader } from "@/components/shared/page-header";
-import { DoctorFormDialog } from "@/components/form/doctor-create-form-dialog";
 import { Plus } from "lucide-react";
+import { useState } from "react";
+import { DoctorFormDialog } from "@/components/form/doctor-create-form-dialog";
+import { PageHeader } from "@/components/shared/page-header";
 import { DoctorTable } from "@/components/table/doctor-table";
+import { Button } from "@/components/ui/button";
 
 export default function DoctorsPage() {
   const [open, setOpen] = useState(false);

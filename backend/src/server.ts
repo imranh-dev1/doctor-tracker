@@ -3,6 +3,7 @@ import "dotenv/config";
 import app from "./app.js";
 import config from "./config/index.js";
 import { connectToMongoDB, disconnectFromMongoDB } from "./lib/db.js";
+import { ensureIndexes } from "./lib/indexes.js";
 import { seedAdmin } from "./utils/seed.js";
 
 const port = Number(config.port ?? 5000);
@@ -12,6 +13,7 @@ const main = async () => {
 		await connectToMongoDB();
 		console.log("Connected to the database successfully.");
 
+		await ensureIndexes();
 		await seedAdmin();
 
 		app.listen(port, () => {

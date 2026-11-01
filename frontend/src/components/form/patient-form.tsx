@@ -3,19 +3,18 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader2, Save } from "lucide-react";
 import { useForm } from "react-hook-form";
+import { toast } from "sonner";
 import { z } from "zod";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { NativeSelect } from "@/components/ui/native-select";
-import { useCreatePatient, useGetAllDoctors } from "@/hooks";
-import AuthLoading from "../auth/auth-loading";
-import { Doctor } from "@/types";
-import { useQueryClient } from "@tanstack/react-query";
-import { toast } from "sonner";
+import { Skeleton } from "@/components/ui/skeleton";
+import { useCreatePatient, useGetAllDoctors, useUpdatePatient } from "@/hooks";
+import type { Patient } from "@/types";
 
-export const createPatientSchema = z.object({
+export const patientSchema = z.object({
   name: z
     .string()
     .trim()
@@ -56,67 +55,88 @@ export const createPatientSchema = z.object({
   doctorId: z.string().min(1, "Please select a doctor"),
 });
 
-export type CreatePatientFormValues = z.infer<typeof createPatientSchema>;
+export type PatientFormValues = z.infer<typeof patientSchema>;
 
-export function CreatePatientForm(setOpen: (open: boolean) => void) {
-  const queryClient = useQueryClient();
-  const { data, isLoading } = useGetAllDoctors();
-  const { mutate: createPatient, isPending } = useCreatePatient();
+interface PatientFormProps {
+  patient?: Patient;
+  defaultDoctorId?: string;
+  onSuccess?: () => void;
+}
 
-  const doctors = data?.data.result ?? [];
+export function PatientForm({
+  patient,
+  defaultDoctorId,
+  onSuccess,
+}: PatientFormProps) {
+  const { data: doctorsResponse, isPending: doctorsLoading } = useGetAllDoctors(
+    { limit: 100 },
+  );
+  const { mutate: createPatient, isPending: isCreating } = useCreatePatient();
+  const { mutate: updatePatient, isPending: isUpdating } = useUpdatePatient();
 
-  if (isLoading) {
-    <AuthLoading key={data} label="Loading...." />;
-  }
+  const isEdit = Boolean(patient);
+  const isPending = isCreating || isUpdating;
+
+  const doctors = doctorsResponse?.data.result ?? [];
 
   const {
     register,
     handleSubmit,
     formState: { errors },
-  } = useForm<CreatePatientFormValues>({
-    resolver: zodResolver(createPatientSchema),
+  } = useForm<PatientFormValues>({
+    resolver: zodResolver(patientSchema),
     defaultValues: {
-      name: "",
-      age: "",
-      gender: "MALE",
-      phone: "",
-      email: "",
-      condition: "",
-      doctorId: "",
+      name: patient?.name ?? "",
+      age: patient ? String(patient.age) : "",
+      gender: patient?.gender ?? "MALE",
+      phone: patient?.phone ?? "",
+      email: patient?.email ?? "",
+      condition: patient?.condition ?? "",
+      doctorId: patient?.doctorId ?? defaultDoctorId ?? "",
     },
   });
 
-  const onSubmit = (values: CreatePatientFormValues) => {
+  const onSubmit = (values: PatientFormValues) => {
     const payload = {
-      name: values.name,
+      name: values.name.trim(),
       age: Number(values.age),
       gender: values.gender,
-      phone: values.phone,
-      email: values.email,
-      condition: values.condition,
+      phone: values.phone.trim(),
+      email: values.email.trim().toLowerCase(),
+      condition: values.condition.trim(),
       doctorId: values.doctorId,
     };
 
-    createPatient(payload, {
+    const callbacks = {
       onSuccess: () => {
-        queryClient.invalidateQueries({
-          queryKey: ["patients"],
-        });
-        toast.success("Patient added successfully.");
-        setOpen(false);
+        toast.success(
+          isEdit
+            ? "Patient updated successfully."
+            : "Patient added successfully.",
+        );
+        onSuccess?.();
       },
-      onError: (error) => {
+      onError: (error: unknown) => {
         toast.error(
-          error instanceof Error ? error.message : "Failed to add patient.",
+          error instanceof Error
+            ? error.message
+            : isEdit
+              ? "Failed to update patient."
+              : "Failed to add patient.",
         );
       },
-    });
+    };
+
+    if (patient) {
+      updatePatient({ id: patient._id, payload }, callbacks);
+    } else {
+      createPatient(payload, callbacks);
+    }
   };
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} noValidate className="space-y-5">
       <div className="grid gap-4 sm:grid-cols-2">
-        {/* Patient Name */}
         <div className="space-y-2 sm:col-span-2">
           <Label htmlFor="patient-name">Patient name</Label>
 
@@ -132,7 +152,6 @@ export function CreatePatientForm(setOpen: (open: boolean) => void) {
           )}
         </div>
 
-        {/* Age */}
         <div className="space-y-2">
           <Label htmlFor="patient-age">Age</Label>
 
@@ -151,7 +170,6 @@ export function CreatePatientForm(setOpen: (open: boolean) => void) {
           )}
         </div>
 
-        {/* Gender */}
         <div className="space-y-2">
           <Label htmlFor="patient-gender">Gender</Label>
 
@@ -171,7 +189,6 @@ export function CreatePatientForm(setOpen: (open: boolean) => void) {
           )}
         </div>
 
-        {/* Phone */}
         <div className="space-y-2">
           <Label htmlFor="patient-phone">Phone number</Label>
 
@@ -188,7 +205,6 @@ export function CreatePatientForm(setOpen: (open: boolean) => void) {
           )}
         </div>
 
-        {/* Email */}
         <div className="space-y-2">
           <Label htmlFor="patient-email">Email address</Label>
 
@@ -205,7 +221,6 @@ export function CreatePatientForm(setOpen: (open: boolean) => void) {
           )}
         </div>
 
-        {/* Condition */}
         <div className="space-y-2 sm:col-span-2">
           <Label htmlFor="patient-condition">Condition</Label>
 
@@ -223,24 +238,27 @@ export function CreatePatientForm(setOpen: (open: boolean) => void) {
           )}
         </div>
 
-        {/* Assigned Doctor */}
         <div className="space-y-2 sm:col-span-2">
           <Label htmlFor="patient-doctor">Assigned doctor</Label>
 
-          <NativeSelect
-            id="patient-doctor"
-            className="w-full"
-            {...register("doctorId")}
-            aria-invalid={Boolean(errors.doctorId)}
-          >
-            <option value="">Select a doctor</option>
+          {doctorsLoading ? (
+            <Skeleton className="h-8 w-full" />
+          ) : (
+            <NativeSelect
+              id="patient-doctor"
+              className="w-full"
+              {...register("doctorId")}
+              aria-invalid={Boolean(errors.doctorId)}
+            >
+              <option value="">Select a doctor</option>
 
-            {doctors.map((doctor: Doctor) => (
-              <option key={doctor._id} value={doctor._id}>
-                {doctor.name} — {doctor.specialization}
-              </option>
-            ))}
-          </NativeSelect>
+              {doctors.map((doctor) => (
+                <option key={doctor._id} value={doctor._id}>
+                  {doctor.name} — {doctor.specialization}
+                </option>
+              ))}
+            </NativeSelect>
+          )}
 
           {errors.doctorId && (
             <p className="text-xs text-destructive">
@@ -250,7 +268,7 @@ export function CreatePatientForm(setOpen: (open: boolean) => void) {
         </div>
       </div>
 
-      <div className="flex justify-end">
+      <div className="flex justify-end gap-2">
         <Button type="submit" disabled={isPending}>
           {isPending ? (
             <Loader2 className="size-4 animate-spin" />
@@ -258,7 +276,13 @@ export function CreatePatientForm(setOpen: (open: boolean) => void) {
             <Save className="size-4" />
           )}
 
-          {isPending ? "Adding patient..." : "Add patient"}
+          {isPending
+            ? isEdit
+              ? "Saving changes..."
+              : "Adding patient..."
+            : isEdit
+              ? "Save changes"
+              : "Add patient"}
         </Button>
       </div>
     </form>

@@ -6,96 +6,84 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table"; 
+} from "@/components/ui/table";
 
-export function PatientTableSkeleton( ) {
+const HEADINGS = [
+  "Patient",
+  "Contact",
+  "Condition",
+  "Assigned doctor",
+  "Registered",
+  "Actions",
+];
+
+const ROWS = [
+  "row-1",
+  "row-2",
+  "row-3",
+  "row-4",
+  "row-5",
+  "row-6",
+  "row-7",
+  "row-8",
+  "row-9",
+  "row-10",
+];
+
+export function PatientTableSkeleton() {
   return (
-    <div className="w-full space-y-4">
-      {/* Table toolbar skeleton */}
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <Skeleton className="h-10 w-full sm:max-w-sm" />
-        <Skeleton className="h-10 w-full sm:w-36" />
-      </div>
+    <div className="w-full overflow-x-auto">
+      <Table>
+        <TableHeader>
+          <TableRow>
+            {HEADINGS.map((heading) => (
+              <TableHead key={heading}>{heading}</TableHead>
+            ))}
+          </TableRow>
+        </TableHeader>
 
-      {/* Table skeleton */}
-      <div className="overflow-hidden rounded-xl border">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Patient</TableHead>
-              <TableHead>Contact</TableHead>
-              <TableHead>Condition</TableHead>
-              <TableHead>Assigned Doctor</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-
-          <TableBody>
-            {Array.from({ length: 10 }, (_, index) => `patient-skeleton-${index}`).map((rowKey) => (
-              <TableRow key={rowKey}>
-                {/* Patient */}
-                <TableCell>
-                  <div className="flex items-center gap-3">
-                    <Skeleton className="size-10 shrink-0 rounded-full" />
-
-                    <div className="space-y-2">
-                      <Skeleton className="h-4 w-28" />
-                      <Skeleton className="h-3 w-16" />
-                    </div>
-                  </div>
-                </TableCell>
-
-                {/* Contact */}
-                <TableCell>
+        <TableBody>
+          {ROWS.map((rowKey) => (
+            <TableRow key={rowKey}>
+              <TableCell>
+                <div className="flex items-center gap-3">
+                  <Skeleton className="size-9 shrink-0 rounded-full" />
                   <div className="space-y-2">
                     <Skeleton className="h-4 w-28" />
-                    <Skeleton className="h-3 w-36" />
+                    <Skeleton className="h-3 w-16" />
                   </div>
-                </TableCell>
+                </div>
+              </TableCell>
 
-                {/* Condition */}
-                <TableCell>
-                  <Skeleton className="h-6 w-24 rounded-full" />
-                </TableCell>
+              <TableCell>
+                <div className="space-y-2">
+                  <Skeleton className="h-4 w-28" />
+                  <Skeleton className="h-3 w-36" />
+                </div>
+              </TableCell>
 
-                {/* Assigned doctor */}
-                <TableCell>
-                  <div className="flex items-center gap-2">
-                    <Skeleton className="size-8 shrink-0 rounded-full" />
-                    <Skeleton className="h-4 w-28" />
-                  </div>
-                </TableCell>
+              <TableCell>
+                <Skeleton className="h-6 w-24 rounded-full" />
+              </TableCell>
 
-                {/* Status */}
-                <TableCell>
-                  <Skeleton className="h-6 w-16 rounded-full" />
-                </TableCell>
+              <TableCell>
+                <div className="space-y-2">
+                  <Skeleton className="h-4 w-28" />
+                  <Skeleton className="h-3 w-20" />
+                </div>
+              </TableCell>
 
-                {/* Actions */}
-                <TableCell>
-                  <div className="flex justify-end gap-2">
-                    <Skeleton className="size-8 rounded-md" />
-                    <Skeleton className="size-8 rounded-md" />
-                  </div>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </div>
+              <TableCell>
+                <Skeleton className="h-4 w-24" />
+              </TableCell>
 
-      {/* Pagination skeleton */}
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <Skeleton className="h-4 w-40" />
-
-        <div className="flex items-center gap-2">
-          <Skeleton className="h-9 w-20 rounded-md" />
-          <Skeleton className="size-9 rounded-md" />
-          <Skeleton className="size-9 rounded-md" />
-          <Skeleton className="h-9 w-20 rounded-md" />
-        </div>
-      </div>
+              <TableCell>
+                <Skeleton className="ml-auto size-8 rounded-md" />
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
     </div>
   );
-} 
+}

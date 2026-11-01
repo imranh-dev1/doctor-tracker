@@ -1,12 +1,22 @@
+export type PatientGender = "MALE" | "FEMALE" | "OTHER";
+
+export interface PatientDoctor {
+  _id: string;
+  name: string;
+  specialization: string;
+  hospital: string;
+}
+
 export interface Patient {
   _id: string;
   name: string;
   age: number;
-  gender: "MALE" | "FEMALE" | "OTHER";
+  gender: PatientGender;
   phone: string;
   email: string;
   condition: string;
   doctorId: string;
+  doctor?: PatientDoctor | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -14,7 +24,7 @@ export interface Patient {
 export interface CreatePatientPayload {
   name: string;
   age: number;
-  gender: "MALE" | "FEMALE" | "OTHER";
+  gender: PatientGender;
   phone: string;
   email: string;
   condition: string;
@@ -29,14 +39,9 @@ export interface PatientQuery {
   search?: string;
   condition?: string;
   doctorId?: string;
-}
-
-export interface PatientListResponse {
-  meta: {
-    page: number;
-    limit: number;
-    total: number;
-    totalPages: number;
-  };
-  data: Patient[];
+  gender?: PatientGender;
+  fromDate?: string;
+  toDate?: string;
+  sortBy?: "name" | "age" | "condition" | "createdAt";
+  sortOrder?: "asc" | "desc";
 }

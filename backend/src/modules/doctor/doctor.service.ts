@@ -1,11 +1,33 @@
 import httpStatus from "http-status";
+import { Document, Filter, ObjectId } from "mongodb";
+import { getDatabase } from "../../lib/db";
+import { AppError } from "../../utils/AppError";
+import { buildDateRange } from "../../utils/dateRange";
 import {
 	CreateDoctorPayload,
 	GetAllDoctorsQuery,
 } from "../../types/doctor.types";
-import { getDatabase } from "../../lib/db";
-import { AppError } from "../../utils/AppError";
-import { Document as MongoDocument, Filter, ObjectId } from "mongodb";
+
+const escapeRegex = (value: string) =>
+	value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+const getPatientCounts = async (doctorIds: ObjectId[]) => {
+	if (doctorIds.length === 0) {
+		return new Map<string, number>();
+	}
+
+	const db = getDatabase();
+	const patients = db.collection("patients");
+
+	const rows = await patients
+		.aggregate<{ _id: ObjectId; count: number }>([
+			{ $match: { doctorId: { $in: doctorIds } } },
+			{ $group: { _id: "$doctorId", count: { $sum: 1 } } },
+		])
+		.toArray();
+
+	return new Map(rows.map((row) => [String(row._id), row.count]));
+};
 
 const createDoctor = async (payload: CreateDoctorPayload) => {
 	const db = getDatabase();
@@ -39,7 +61,11 @@ const createDoctor = async (payload: CreateDoctorPayload) => {
 
 	const result = await doctors.insertOne(newDoctor);
 
-	return result;
+	return {
+		...newDoctor,
+		_id: result.insertedId,
+		patientCount: 0,
+	};
 };
 
 const getAllDoctors = async (query: GetAllDoctorsQuery) => {
@@ -59,12 +85,12 @@ const getAllDoctors = async (query: GetAllDoctorsQuery) => {
 
 	const skip = (page - 1) * limit;
 
-	const filter: Filter<MongoDocument> = {};
+	const filter: Filter<Document> = {};
 
 	const search = query.search?.trim();
 
 	if (search) {
-		const escapedSearch = search.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+		const escapedSearch = escapeRegex(search);
 
 		filter.$or = [
 			{ name: { $regex: escapedSearch, $options: "i" } },
@@ -77,16 +103,22 @@ const getAllDoctors = async (query: GetAllDoctorsQuery) => {
 
 	if (query.specialization?.trim()) {
 		filter.specialization = {
-			$regex: `^${query.specialization.trim().replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`,
+			$regex: `^${escapeRegex(query.specialization.trim())}$`,
 			$options: "i",
 		};
 	}
 
 	if (query.hospital?.trim()) {
 		filter.hospital = {
-			$regex: `^${query.hospital.trim().replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`,
+			$regex: `^${escapeRegex(query.hospital.trim())}$`,
 			$options: "i",
 		};
+	}
+
+	const dateRange = buildDateRange(query.fromDate, query.toDate);
+
+	if (dateRange) {
+		filter.createdAt = dateRange;
 	}
 
 	const allowedSortFields = [
@@ -119,6 +151,10 @@ const getAllDoctors = async (query: GetAllDoctorsQuery) => {
 		doctors.countDocuments(filter),
 	]);
 
+	const counts = await getPatientCounts(
+		result.map((doctor) => doctor._id as ObjectId),
+	);
+
 	return {
 		meta: {
 			page,
@@ -126,13 +162,17 @@ const getAllDoctors = async (query: GetAllDoctorsQuery) => {
 			total,
 			totalPages: Math.ceil(total / limit),
 		},
-		result,
+		result: result.map((doctor) => ({
+			...doctor,
+			patientCount: counts.get(String(doctor._id)) ?? 0,
+		})),
 	};
 };
 
 const deleteDoctor = async (id: string) => {
 	const db = getDatabase();
 	const doctors = db.collection("doctors");
+	const patients = db.collection("patients");
 
 	if (!ObjectId.isValid(id)) {
 		throw new AppError(httpStatus.BAD_REQUEST, "Invalid doctor ID");
@@ -148,6 +188,10 @@ const deleteDoctor = async (id: string) => {
 
 	await doctors.deleteOne({
 		_id: new ObjectId(id),
+	});
+
+	await patients.deleteMany({
+		doctorId: new ObjectId(id),
 	});
 
 	return doctor;

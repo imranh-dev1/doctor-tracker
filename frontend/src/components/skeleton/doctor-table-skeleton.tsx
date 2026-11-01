@@ -16,10 +16,10 @@ export function DoctorTableSkeleton() {
           <TableRow>
             {[
               "Doctor",
-              "Email",
               "Phone",
               "Specialization",
               "Hospital",
+              "Patients",
               "Date added",
               "Actions",
             ].map((heading) => (
@@ -44,10 +44,10 @@ export function DoctorTableSkeleton() {
             <TableRow key={rowKey}>
               {[
                 { key: "doctor", className: "h-10 w-36" },
-                { key: "email", className: "h-4 w-28" },
                 { key: "phone", className: "h-4 w-28" },
                 { key: "specialization", className: "h-4 w-28" },
                 { key: "hospital", className: "h-4 w-28" },
+                { key: "patients", className: "h-4 w-10" },
                 { key: "date-added", className: "h-4 w-28" },
                 { key: "actions", className: "ml-auto size-8 rounded-md" },
               ].map(({ key, className }) => (
