@@ -22,7 +22,7 @@ Doctor Tracker is a secure, responsive administrative web application for managi
 - React
 - TypeScript
 - Tailwind CSS
-- [Add the charting and data-fetching libraries used by your project]
+
 
 ### Backend
 - Node.js
@@ -30,14 +30,12 @@ Doctor Tracker is a secure, responsive administrative web application for managi
 - TypeScript
 - MongoDB
 - Zod (request validation, if used)
-- JSON Web Token / cookie-based authentication (describe the exact implementation used)
+- JSON Web Token / cookie-based authentication
 
 ### Tooling
 - Bun
 - Git and GitHub
-
-> Remove any technologies that are not used in your codebase and add any project-specific dependencies.
-
+  
 ## Repository Structure
 
 This project uses separate frontend and backend applications.
@@ -197,13 +195,13 @@ Replace or expand the examples below with the real routes and HTTP methods imple
 | Authentication | `POST /api/auth/login` | Sign in as an administrator |
 | Authentication | `POST /api/auth/logout` | End the authenticated session, if supported |
 | Dashboard | `GET /api/dashboard` | Retrieve dashboard metrics, if supported |
-| Doctors | `GET /api/doctors` | List doctors with query parameters |
-| Doctors | `POST /api/doctors` | Create a doctor |
-| Doctor patients | `GET /api/doctors/:doctorId/patients` | List patients assigned to a doctor |
-| Doctor patients | `POST /api/doctors/:doctorId/patients` | Add a patient to a doctor |
-| Patients | `GET /api/patients` | List patients with query parameters |
-| Patients | `PATCH /api/patients/:patientId` | Update a patient |
-| Patients | `DELETE /api/patients/:patientId` | Delete a patient |
+| Doctors | `GET /api/doctor` | List doctors with query parameters |
+| Doctors | `POST /api/doctor` | Create a doctor |
+| Doctor patients | `GET /api/doctor/:doctorId/patient` | List patients assigned to a doctor |
+| Doctor patients | `POST /api/doctor/:doctorId/patient` | Add a patient to a doctor |
+| Patients | `GET /api/patient` | List patients with query parameters |
+| Patients | `PATCH /api/patient/:patientId` | Update a patient |
+| Patients | `DELETE /api/patient/:patientId` | Delete a patient |
 
 Example list query parameters may include `page`, `limit`, `search`, `startDate`, `endDate`, and `condition`. Only document parameters that your API actually supports.
 
