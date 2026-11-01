@@ -258,8 +258,6 @@ Only retain statements that accurately describe the implementation.
 
 ![Doctor Tracker login page](screenshots/login-page.png)
 
-If a screenshot has not been added yet, replace the placeholder with the real image before submission. Do not leave broken image links in the final README.
-
 ## Deployment
 
 Fill in the actual production URLs before submission.
