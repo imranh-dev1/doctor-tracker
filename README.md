@@ -212,8 +212,6 @@ Doctor and patient lists commonly require searching, filtering, sorting, and pag
 
 The backend should apply filtering and pagination in MongoDB rather than loading an entire collection into the frontend. For predictable results, sorting should use a stable field (and a unique tie-breaker where appropriate). Indexes should be verified against the queries the application actually runs, because unnecessary indexes increase storage use and write overhead.
 
-**Implementation note:** List the exact indexes defined by your project and explain which queries they support.
-
 ### 2. Separate frontend and REST API
 
 The frontend and backend are maintained as separate applications: Next.js handles the user interface, while Express exposes REST endpoints and owns server-side validation, authorization, and database access. This separation keeps database credentials on the server, gives the API a clear responsibility boundary, and allows the frontend and backend to be deployed independently.
