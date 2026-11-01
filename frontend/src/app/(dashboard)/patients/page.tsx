@@ -1,5 +1,6 @@
 import { CreatePatientDialog } from "@/components/dilog/create-patient-dialog";
 import { PageHeader } from "@/components/shared/page-header";
+import { PatientTable } from "@/components/table/patient-table";
 
 export default function PatientsPage() {
   return (
@@ -12,6 +13,7 @@ export default function PatientsPage() {
         />
         <CreatePatientDialog />
       </div>
+      <PatientTable />
     </div>
   );
 }

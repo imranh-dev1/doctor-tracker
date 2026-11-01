@@ -14,4 +14,6 @@ router.post(
 	PatientController.createPatient,
 );
 
+router.get("/", auth(UserRole.ADMIN), PatientController.getPatients);
+
 export const PatientRoutes = router;
