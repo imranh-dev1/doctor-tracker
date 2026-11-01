@@ -220,8 +220,6 @@ The frontend and backend are maintained as separate applications: Next.js handle
 
 The frontend should use a single configured API client and a consistent data-fetching strategy to avoid duplicated request logic. The API should validate incoming input, enforce authorization on protected routes, and return predictable response and error formats.
 
-**Implementation note:** Replace this section with the specific data-fetching/state-management and authentication choices used in your code (for example, TanStack Query, SWR, React Context, or Redux). Do not claim a library or security feature that is not present.
-
 ## Performance and Security Notes
 
 - Apply search, filtering, sorting, and pagination on the server for larger datasets.
