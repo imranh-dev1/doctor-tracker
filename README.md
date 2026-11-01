@@ -265,8 +265,6 @@ Only retain statements that accurately describe the implementation.
 - **Frontend repository:** `https://github.com/imranh-dev1/doctor-tracker/tree/main/frontend`
 - **Backend repository:** `https://github.com/imranh-dev1/doctor-tracker/tree/main/backend`
 
-Ensure that the deployed frontend points to the production backend URL and that the backend's CORS configuration permits the deployed frontend origin. Confirm that the database connection, authentication, and key CRUD operations work in production.
-
 ## Demo Credentials
 
 Provide a dedicated evaluation account only if appropriate and permitted.
