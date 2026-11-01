@@ -45,8 +45,6 @@ doctor-tracker/
 └── backend/      # Express REST API
 ```
 
-The exact internal structure may differ. Refer to each application's source tree for implementation details.
-
 ## System Architecture
 
 ```text
@@ -75,8 +73,6 @@ MongoDB
 3. The API validates the request and verifies the user's authentication and permissions.
 4. The API queries or updates MongoDB and returns a JSON response.
 5. The frontend renders the returned data and updates dashboard metrics and charts.
-
-The exact authentication flow and collection names should be documented according to the implementation.
 
 ## Prerequisites
 
@@ -119,8 +115,6 @@ On Windows PowerShell, you can use:
 Copy-Item .env.example .env
 ```
 
-Fill in the required values in `backend/.env`. Use your own development database and secrets; do not commit the `.env` file.
-
 Example `.env.example` (adjust the names to match your configuration):
 
 ```dotenv
@@ -131,15 +125,11 @@ JWT_SECRET=replace_with_a_long_random_secret
 FRONTEND_URL=http://localhost:3000
 ```
 
-If your application uses cookie settings, an access-token secret, refresh-token secret, or other environment variables, document them here as well. Never put real credentials in this file.
-
 Run the backend using the scripts defined in `backend/package.json`. For example:
 
 ```bash
 bun run dev
 ```
-
-If the project uses a different script name, replace the command with the actual script.
 
 ### 3. Configure the frontend
 
@@ -154,8 +144,6 @@ Create `frontend/.env.local` and set the backend API base URL. Example:
 NEXT_PUBLIC_API_URL=http://localhost:5000/api
 ```
 
-Change the variable name and URL to match the frontend API client in your codebase.
-
 Start the frontend using the script defined in `frontend/package.json`. For example:
 
 ```bash
@@ -164,15 +152,7 @@ bun run dev
 
 Open [http://localhost:3000](http://localhost:3000) in your browser, or use the URL printed by the development server.
 
-### 4. Create or seed an admin account
-
-Use the project's admin seed script if one is provided. Check the backend `package.json` for the exact command.
-
-If a seed script is not included, create an admin account through your documented, secure setup process. Do not publish a real production admin password in the repository.
-
 ## Environment Variables
-
-Document every environment variable required by the actual application.
 
 | Variable | Application | Purpose | Example |
 |---|---|---|---|
@@ -183,11 +163,7 @@ Document every environment variable required by the actual application.
 | `FRONTEND_URL` | Backend | Allowed frontend origin for CORS | `http://localhost:3000` |
 | `NEXT_PUBLIC_API_URL` | Frontend | Base URL used by the API client | `http://localhost:5000/api` |
 
-These are examples, not a guarantee of the variable names used by the project. Keep this table synchronized with the actual configuration files.
-
 ## API Overview
-
-Replace or expand the examples below with the real routes and HTTP methods implemented by the backend.
 
 | Area | Example endpoint | Purpose |
 |---|---|---|
@@ -202,7 +178,7 @@ Replace or expand the examples below with the real routes and HTTP methods imple
 | Patients | `PATCH /api/patient/:patientId` | Update a patient |
 | Patients | `DELETE /api/patient/:patientId` | Delete a patient |
 
-Example list query parameters may include `page`, `limit`, `search`, `startDate`, `endDate`, and `condition`. Only document parameters that your API actually supports.
+list query parameters  include `page`, `limit`, `search`, `startDate`, `endDate`, and `condition`. Only document parameters that your API actually supports.
 
 ## Technical Decisions
 
