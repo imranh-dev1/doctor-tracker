@@ -4,45 +4,69 @@ Doctor Tracker is a secure, responsive administrative web application for managi
 
 ## Features
 
-- **Authentication:** Secure admin login and protected application routes.
-- **Dashboard:** Overview of doctor and patient totals, patient distribution, and date-based statistics with visual charts.
-- **Doctor management:** Create and view doctor records, search and filter the list, and paginate results.
-- **Doctor–patient management:** View patients assigned to a doctor, add patients, and remove patients from the doctor's list.
-- **Patient management:** View, search, filter, paginate, edit, and delete patient records.
-- **Validation and error handling:** Validate incoming data and return consistent API errors.
-- **Database performance:** MongoDB indexes and efficient query patterns for common searches and filters.
-- **Responsive UI:** Navigation and layouts designed for desktop and mobile screens.
-
+- **Authentication:** Cookie-based admin login, protected API routes, and route guards on the frontend.
+- **Dashboard:** Overview of doctor and patient totals, month-over-month growth, 12-month trends, patients per doctor, condition and specialization distribution, gender breakdown, and recent patients with charts.
+- **Doctor management:** Create, list, search, filter, sort, and paginate doctors; delete a doctor together with their assigned patients.
+- **Patient management:** Create, view, search, filter, sort, paginate, edit, and delete patient records.
+- **Doctor–patient relationship:** Each patient is assigned to a doctor. Patients list can be filtered by doctor, and doctor rows show the assigned patient count.
+- **Validation and error handling:** Zod request validation and a centralized Express error handler with consistent JSON responses.
+- **Database performance:** MongoDB indexes on frequently queried fields and server-side filtering/pagination.
+- **Responsive UI:** Navigation, tables, dialogs, and dashboard layouts designed for desktop and mobile screens.
 
 ## Tech Stack
 
 ### Frontend
-- Next.js
-- React
-- TypeScript
-- Tailwind CSS
 
+- Next.js 16 (App Router)
+- React 19
+- TypeScript
+- Tailwind CSS 4
+- TanStack Query
+- React Hook Form + Zod
+- shadcn/Base UI components, Phosphor and Lucide icons
+- ofetch API client
+- Biome (lint and format)
 
 ### Backend
+
 - Node.js
-- Express
+- Express 5
 - TypeScript
-- MongoDB
-- Zod (request validation, if used)
-- JSON Web Token / cookie-based authentication
+- MongoDB (official `mongodb` driver)
+- Zod 4 (request validation)
+- JSON Web Token + `httpOnly` cookie authentication
+- bcryptjs (password hashing)
+- Biome (lint and format)
 
 ### Tooling
-- Bun
-- Git and GitHub
-  
-## Repository Structure
 
-This project uses separate frontend and backend applications.
+- Bun (dependency installation and script runner)
+- Git and GitHub
+
+## Repository Structure
 
 ```text
 doctor-tracker/
-├── frontend/     # Next.js client application
-└── backend/      # Express REST API
+├── frontend/           # Next.js client application
+│   └── src/
+│       ├── api/        # API request functions
+│       ├── app/        # App Router pages and layouts
+│       ├── components/ # UI, forms, tables, charts, dialogs
+│       ├── hooks/      # TanStack Query hooks
+│       ├── lib/        # API client and helpers
+│       └── types/      # Shared TypeScript types
+├── backend/            # Express REST API
+│   └── src/
+│       ├── config/     # Environment configuration
+│       ├── lib/        # MongoDB connection and indexes
+│       ├── middlewares/# Auth, validation, error handling
+│       ├── modules/    # auth, doctor, patient, dashboard
+│       ├── types/      # Domain and payload types
+│       ├── utils/      # JWT, cookies, responses, seeding
+│       ├── app.ts      # Express app and route mounting
+│       └── server.ts   # Server bootstrap
+├── screenshots/        # README visual evidence
+└── README.md
 ```
 
 ## System Architecture
@@ -51,160 +75,281 @@ doctor-tracker/
 Admin
   |
   v
-Next.js Frontend
-  |  HTTPS requests to REST endpoints
+Next.js Frontend (App Router, TanStack Query)
+  |  HTTPS requests to /api/* with credentials included
   v
 Express API (Node.js)
-  |-- Authentication and authorization
-  |-- Request validation
-  |-- Doctor and patient business logic
+  |-- CORS for the configured frontend origin
+  |-- Authentication and authorization (JWT in httpOnly cookies)
+  |-- Zod request validation
+  |-- Doctor, patient, and dashboard business logic
   |-- Search, filtering, sorting, and pagination
   |
   v
 MongoDB
-  |-- Users / admin accounts
-  |-- Doctors
-  |-- Patients
+  |-- users      (admin and application accounts)
+  |-- doctors
+  |-- patients   (references doctors by doctorId)
   |-- Indexes for frequently queried fields
 ```
 
 1. The administrator signs in through the Next.js frontend.
-2. The frontend sends requests to the Express API using the configured API base URL.
-3. The API validates the request and verifies the user's authentication and permissions.
+2. The API validates credentials and sets `accessToken` and `refreshToken` as `httpOnly` cookies.
+3. The frontend sends API requests with `credentials: "include"`; protected routes verify the token and role.
 4. The API queries or updates MongoDB and returns a JSON response.
 5. The frontend renders the returned data and updates dashboard metrics and charts.
 
 ## Prerequisites
 
-Install the following before running the project locally:
-
-- [Bun](https://bun.sh/) or the package manager configured by the project
-- A supported Node.js version if required by your scripts
+- [Bun](https://bun.sh/) (used to install dependencies and run scripts)
+- A supported Node.js version for Next.js and the compiled backend
 - A MongoDB database, such as MongoDB Atlas or a local MongoDB instance
 - Git
 
 ## Local Setup
 
-### 1. Clone the repositories
-
-If the frontend and backend are separate repositories, clone both:
+### 1. Clone the repository
 
 ```bash
-git clone https://github.com/imranh-dev1/doctor-tracker/tree/main/frontend
-git clone https://github.com/imranh-dev1/doctor-tracker/tree/main/frontend
+git clone https://github.com/imranh-dev1/doctor-tracker.git
+cd doctor-tracker
 ```
 
-Open each repository in a terminal for the following steps.
-
-### 2. Configure the backend
+### 2. Configure and run the backend
 
 ```bash
-cd <backend-directory>
+cd backend
 bun install
 ```
 
-Create a `.env` file from the example:
+Create the environment file from the example:
 
 ```bash
 cp .env.example .env
 ```
 
-On Windows PowerShell, you can use:
+On Windows PowerShell:
 
 ```powershell
 Copy-Item .env.example .env
 ```
 
-Example `.env.example` (adjust the names to match your configuration):
+Fill in at least these values:
 
 ```dotenv
 PORT=5000
 NODE_ENV=development
-MONGODB_URI=mongodb://127.0.0.1:27017/doctor_tracker
-JWT_SECRET=replace_with_a_long_random_secret
 FRONTEND_URL=http://localhost:3000
+MONGODB_URI=mongodb://127.0.0.1:27017/doctor-tracker
+ADMIN_NAME=Admin
+ADMIN_EMAIL=admin@gmail.com
+ADMIN_PASSWORD=change-me
+BCRYPT_SALT_ROUNDS=10
+JWT_ACCESS_SECRET=replace-with-a-long-random-access-secret
+JWT_REFRESH_SECRET=replace-with-a-long-random-refresh-secret
+JWT_ACCESS_EXPIRES_IN=15m
+JWT_REFRESH_EXPIRES_IN=7d
 ```
 
-Run the backend using the scripts defined in `backend/package.json`. For example:
+Start the API:
 
 ```bash
 bun run dev
 ```
 
-### 3. Configure the frontend
+The server connects to MongoDB, creates the configured indexes, seeds the admin account if no admin exists, and listens on `http://localhost:5000`.
+
+### 3. Configure and run the frontend
 
 ```bash
-cd <frontend-directory>
+cd ../frontend
 bun install
 ```
 
-Create `frontend/.env.local` and set the backend API base URL. Example:
+Create `frontend/.env.local` (or `.env`) from the example:
+
+```bash
+cp .env.example .env.local
+```
 
 ```dotenv
 NEXT_PUBLIC_API_URL=http://localhost:5000/api
 ```
 
-Start the frontend using the script defined in `frontend/package.json`. For example:
+Start the frontend:
 
 ```bash
 bun run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) in your browser, or use the URL printed by the development server.
+Open [http://localhost:3000](http://localhost:3000) and sign in with the seeded admin account.
+
+## Available Scripts
+
+### Backend (`backend/package.json`)
+
+| Script | Command | Purpose |
+|---|---|---|
+| `dev` | `tsx watch src/server.ts` | Run the API in watch mode |
+| `build` | `tsc` | Compile TypeScript to `dist/` |
+| `start` | `node dist/server.js` | Run the compiled server |
+| `typecheck` | `tsc --noEmit` | Type-check without emitting |
+| `format:check` | `biome format ./src` | Check formatting |
+| `format:fix` | `biome format --write ./src` | Apply formatting |
+| `linter:check` | `biome lint` | Run the linter |
+| `linter:fix` | `biome lint --write ./src` | Apply lint fixes |
+
+### Frontend (`frontend/package.json`)
+
+| Script | Command | Purpose |
+|---|---|---|
+| `dev` | `next dev` | Start the Next.js development server |
+| `build` | `next build` | Create a production build |
+| `start` | `next start` | Run the production build |
+| `lint` | `biome check` | Lint and check formatting |
+| `format` | `biome format --write` | Apply formatting |
 
 ## Environment Variables
 
-| Variable | Application | Purpose | Example |
+### Backend
+
+| Variable | Required | Purpose | Example |
 |---|---|---|---|
-| `PORT` | Backend | Express server port | `5000` |
-| `NODE_ENV` | Backend | Runtime environment | `development` |
-| `MONGODB_URI` | Backend | MongoDB connection string | `mongodb://127.0.0.1:27017/doctor_tracker` |
-| `JWT_SECRET` | Backend | Secret used to sign JWTs, if applicable | Placeholder only |
-| `FRONTEND_URL` | Backend | Allowed frontend origin for CORS | `http://localhost:3000` |
-| `NEXT_PUBLIC_API_URL` | Frontend | Base URL used by the API client | `http://localhost:5000/api` |
+| `PORT` | No | Express server port (defaults to `5000`) | `5000` |
+| `NODE_ENV` | No | Runtime environment; controls error detail and cookie security | `development` |
+| `MONGODB_URI` | Yes | MongoDB connection string | `mongodb://127.0.0.1:27017/doctor-tracker` |
+| `FRONTEND_URL` | No | Allowed frontend origin for CORS (defaults to `http://localhost:3000`) | `http://localhost:3000` |
+| `ADMIN_NAME` | Yes (first start) | Seeded admin display name | `Admin` |
+| `ADMIN_EMAIL` | Yes (first start) | Seeded admin email | `admin@gmail.com` |
+| `ADMIN_PASSWORD` | Yes (first start) | Seeded admin password | `change-me` |
+| `BCRYPT_SALT_ROUNDS` | No | Password hashing cost | `10` |
+| `JWT_ACCESS_SECRET` | Yes | Secret used to sign access tokens | Long random string |
+| `JWT_REFRESH_SECRET` | Yes | Secret used to sign refresh tokens | Long random string |
+| `JWT_ACCESS_EXPIRES_IN` | Yes | Access token lifetime | `15m` |
+| `JWT_REFRESH_EXPIRES_IN` | Yes | Refresh token lifetime | `7d` |
+
+`DOCTOR_*` and `PATIENT_*` entries in `.env.example` are reserved placeholders and are not currently read by the application.
+
+### Frontend
+
+| Variable | Required | Purpose | Example |
+|---|---|---|---|
+| `NEXT_PUBLIC_API_URL` | Yes | Base URL of the REST API, including the `/api` prefix | `http://localhost:5000/api` |
 
 ## API Overview
 
-| Area | Example endpoint | Purpose |
-|---|---|---|
-| Authentication | `POST /api/auth/login` | Sign in as an administrator |
-| Authentication | `POST /api/auth/logout` | End the authenticated session, if supported |
-| Dashboard | `GET /api/dashboard` | Retrieve dashboard metrics, if supported |
-| Doctors | `GET /api/doctor` | List doctors with query parameters |
-| Doctors | `POST /api/doctor` | Create a doctor |
-| Doctor patients | `GET /api/doctor/:doctorId/patient` | List patients assigned to a doctor |
-| Doctor patients | `POST /api/doctor/:doctorId/patient` | Add a patient to a doctor |
-| Patients | `GET /api/patient` | List patients with query parameters |
-| Patients | `PATCH /api/patient/:patientId` | Update a patient |
-| Patients | `DELETE /api/patient/:patientId` | Delete a patient |
+Base URL: `http://localhost:5000` — all application routes are prefixed with `/api`.
 
-list query parameters  include `page`, `limit`, `search`, `startDate`, `endDate`, and `condition`. Only document parameters that your API actually supports.
+### Authentication
+
+| Method | Endpoint | Access | Purpose |
+|---|---|---|---|
+| `POST` | `/api/auth/register` | Admin | Create an application user (always role `PATIENT`) |
+| `POST` | `/api/auth/login` | Public | Sign in and set `accessToken` / `refreshToken` cookies |
+| `GET` | `/api/auth/me` | Any authenticated role | Return the current user without the password |
+| `POST` | `/api/auth/logout` | Public | Clear authentication cookies |
+
+### Doctors
+
+| Method | Endpoint | Access | Purpose |
+|---|---|---|---|
+| `GET` | `/api/doctor` | Admin | List doctors with pagination, search, filters, and sorting |
+| `POST` | `/api/doctor` | Admin | Create a doctor |
+| `DELETE` | `/api/doctor/:id` | Admin | Delete a doctor and their assigned patients |
+
+### Patients
+
+| Method | Endpoint | Access | Purpose |
+|---|---|---|---|
+| `GET` | `/api/patient` | Admin | List patients with pagination, search, filters, and sorting |
+| `POST` | `/api/patient` | Admin | Create a patient assigned to a doctor |
+| `GET` | `/api/patient/conditions` | Admin | Return the distinct list of patient conditions |
+| `GET` | `/api/patient/:id` | Admin | Return a single patient with doctor details |
+| `PATCH` | `/api/patient/:id` | Admin | Update one or more patient fields |
+| `DELETE` | `/api/patient/:id` | Admin | Delete a patient |
+
+### Dashboard
+
+| Method | Endpoint | Access | Purpose |
+|---|---|---|---|
+| `GET` | `/api/dashboard/stats` | Admin | Return totals, growth, monthly trends, distributions, and recent patients |
+
+### Health Check
+
+| Method | Endpoint | Access | Purpose |
+|---|---|---|---|
+| `GET` | `/` | Public | Confirm the API is running |
+
+### Query Parameters
+
+**Doctors** (`GET /api/doctor`): `page`, `limit` (max `100`), `search`, `specialization`, `hospital`, `fromDate`, `toDate`, `sortBy` (`name`, `email`, `phone`, `specialization`, `hospital`, `createdAt`), `sortOrder` (`asc` or `desc`).
+
+**Patients** (`GET /api/patient`): `page`, `limit` (max `100`), `search`, `condition`, `doctorId`, `gender` (`MALE`, `FEMALE`, `OTHER`), `fromDate`, `toDate`, `sortBy` (`name`, `age`, `condition`, `createdAt`), `sortOrder` (`asc` or `desc`).
+
+### Response Format
+
+Successful responses:
+
+```json
+{
+  "success": true,
+  "statusCode": 200,
+  "message": "Doctors retrieved successfully.",
+  "data": {},
+  "meta": {
+    "page": 1,
+    "limit": 10,
+    "total": 42,
+    "totalPages": 5
+  }
+}
+```
+
+Error responses include `success: false`, `statusCode`, `name`, and `message`. In development the full error and stack trace are also returned; production responses stay generic.
+
+### Authentication Details
+
+- JWTs are sent as `accessToken` and `refreshToken` `httpOnly` cookies; an `Authorization: Bearer <token>` header is also accepted.
+- In development cookies are `SameSite=Lax` and not `Secure`; in production they are `SameSite=None` and `Secure`.
+- Access cookies live for 1 day and refresh cookies for 7 days.
+- Roles are defined as `ADMIN`, `DOCTOR`, and `PATIENT`; all management routes currently require `ADMIN`.
+
+## Data Model
+
+| Collection | Key fields | Indexes |
+|---|---|---|
+| `users` | `name`, `email`, `password` (hash), `role`, `status`, `emailVerified`, timestamps | Unique `email` |
+| `doctors` | `name`, `specialization`, `hospital`, `phone`, `email`, timestamps | Unique `email`, unique `phone`, `name`, `specialization`, `hospital`, `createdAt` |
+| `patients` | `name`, `age`, `gender`, `phone`, `email`, `condition`, `doctorId`, timestamps | Unique `email`, `doctorId + createdAt`, `condition`, `name`, `createdAt` |
+
+Deleting a doctor also deletes every patient whose `doctorId` references that doctor.
 
 ## Technical Decisions
 
 ### 1. MongoDB indexes and query patterns
 
-Doctor and patient lists commonly require searching, filtering, sorting, and pagination. MongoDB indexes can reduce the amount of data examined for frequently queried fields. Indexes should be selected based on real query patterns—for example, fields used for date filters, patient conditions, doctor references, or common search operations.
-
-The backend should apply filtering and pagination in MongoDB rather than loading an entire collection into the frontend. For predictable results, sorting should use a stable field (and a unique tie-breaker where appropriate). Indexes should be verified against the queries the application actually runs, because unnecessary indexes increase storage use and write overhead.
+Doctor and patient lists commonly require searching, filtering, sorting, and pagination. The backend creates indexes on fields used by those queries (for example `createdAt`, `doctorId`, `condition`, `specialization`, and unique `email`/`phone` lookups), and applies filtering and pagination in MongoDB rather than loading entire collections into the frontend.
 
 ### 2. Separate frontend and REST API
 
-The frontend and backend are maintained as separate applications: Next.js handles the user interface, while Express exposes REST endpoints and owns server-side validation, authorization, and database access. This separation keeps database credentials on the server, gives the API a clear responsibility boundary, and allows the frontend and backend to be deployed independently.
+Next.js handles the user interface, while Express owns server-side validation, authorization, and database access. Database credentials stay on the server, the API has a clear responsibility boundary, and both applications can be deployed independently.
 
-The frontend should use a single configured API client and a consistent data-fetching strategy to avoid duplicated request logic. The API should validate incoming input, enforce authorization on protected routes, and return predictable response and error formats.
+The frontend uses one configured `ofetch` client (`src/lib/apiClient.ts`) with `credentials: "include"` and a single `NEXT_PUBLIC_API_URL` value. The API validates input, enforces authorization on protected routes, and returns predictable response shapes.
+
+### 3. Cookie-based JWT authentication
+
+Tokens are stored in `httpOnly` cookies to reduce exposure to client-side scripts, while the API also accepts bearer tokens for non-browser clients. Passwords are hashed with bcryptjs and never returned in responses.
 
 ## Performance and Security Notes
 
-- Apply search, filtering, sorting, and pagination on the server for larger datasets.
-- Add indexes based on actual query patterns and verify them with query explain plans when appropriate.
-- Validate request bodies and query parameters before database operations.
-- Protect private API routes with authentication and enforce authorization on the server.
-- Keep secrets and database connection strings in environment variables.
-- Configure CORS for the intended frontend origin.
-- Avoid returning password hashes, tokens, or other sensitive fields in API responses.
-- Use consistent error responses and avoid exposing stack traces in production.
-- Keep dependencies updated and avoid unnecessary frontend re-renders.
+- Search, filtering, sorting, and pagination run on the server.
+- Indexes are created automatically at startup for the documented query fields.
+- Request bodies are validated with Zod before database operations.
+- Private routes require a valid token and an allowed role; blocked users are rejected.
+- Secrets and connection strings are read from environment variables and excluded from Git via `.gitignore`.
+- CORS is restricted to `FRONTEND_URL` and allows credentials.
+- Password hashes and password-equivalent fields are stripped from API responses.
+- Production error responses do not expose stack traces or internal messages.
 
 ## Visual Evidence
 
@@ -235,14 +380,21 @@ The frontend should use a single configured API client and a consistent data-fet
 - **Frontend repository:** `https://github.com/imranh-dev1/doctor-tracker/tree/main/frontend`
 - **Backend repository:** `https://github.com/imranh-dev1/doctor-tracker/tree/main/backend`
 
+The backend includes a `vercel.json` that builds `dist/server.js` with `@vercel/node` and routes all requests to it. Run `bun run build` before deploying so `dist/` exists.
+
 ## Demo Credentials
 
 - **Email:** `admin@gmail.com`
 - **Password:** `admin@`
 
-## Future Improvements
+These credentials come from the local `.env` used for the demo. Change the admin email and password before any real deployment.
 
-- Automated tests for authentication and CRUD workflows
+## Known Limitations / Future Improvements
+
+- No automated test suite yet for authentication and CRUD workflows
+- No update endpoint for doctors (create, list, and delete are exposed)
+- `DOCTOR` and `PATIENT` roles exist, but only `/api/auth/me` accepts them; management routes are admin-only
+- `DOCTOR_*` and `PATIENT_*` demo account variables in `.env.example` are not wired to seeding
 - More detailed audit logs and analytics
 - Exportable reports
 - Rate limiting and additional authentication protections
